@@ -48,6 +48,7 @@
         <div id="user-menu-dropdown" class="dropdown hidden">
           <span id="user-menu-name" class="dropdown-label"></span>
           <button id="admin-panel-btn" class="dropdown-item hidden">Admin panel</button>
+          <button id="export-all-btn" class="dropdown-item">Export all notes</button>
           <button id="logout-btn" class="dropdown-item">Sign out</button>
         </div>
       </div>
@@ -93,6 +94,7 @@
               <button data-cmd="codeblock" title="Code block">```</button>
               <button data-cmd="link" title="Link">&#128279;</button>
               <button data-cmd="hr" title="Horizontal rule">&#8213;</button>
+              <button data-cmd="image" title="Insert image">&#128444;</button>
             </div>
             <div id="editor-body" contenteditable="true" data-placeholder="What's on your mind..."></div>
             <div id="editor-footer">
@@ -102,6 +104,7 @@
                 <label class="visibility-toggle">
                   <input type="checkbox" id="editor-public"> Public
                 </label>
+                <button id="editor-import-btn" class="secondary-btn" title="Import Markdown file">Import .md</button>
                 <button id="editor-save-btn">Save</button>
               </div>
             </div>
@@ -148,6 +151,8 @@
         </div>
         <div class="modal-actions">
           <button id="modal-edit-btn">Edit</button>
+          <button id="modal-export-html-btn">Export HTML</button>
+          <button id="modal-export-text-btn">Export text</button>
           <button id="modal-delete-btn" class="danger-btn">Delete</button>
         </div>
       </div>
@@ -203,6 +208,10 @@
     </div>
 
   </div>
+
+  <!-- Hidden file inputs -->
+  <input type="file" id="image-upload-input" accept="image/*" style="display:none">
+  <input type="file" id="md-import-input" accept=".md,.txt" style="display:none">
 
   <!-- Note link autocomplete -->
   <div id="link-autocomplete" class="hidden">

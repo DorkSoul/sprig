@@ -36,6 +36,7 @@ function initInlineEditor() {
   const publicEl = document.getElementById('editor-public');
 
   Editor.initToolbar(toolbarEl, bodyEl, tagsPreview);
+  Editor.initImport(bodyEl, tagsPreview);
   Editor.loadDraft('sprig-draft', bodyEl, titleEl);
 
   bodyEl.addEventListener('input', () => {

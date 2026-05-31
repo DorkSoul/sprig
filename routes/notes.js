@@ -9,7 +9,7 @@ const router = express.Router();
 
 const ALLOWED_TAGS = new Set([
   'p','br','strong','em','u','s','h1','h2','h3',
-  'ul','ol','li','blockquote','code','pre','a','hr','span',
+  'ul','ol','li','blockquote','code','pre','a','hr','span','img',
 ]);
 
 const ALLOWED_ATTRS = {
@@ -17,6 +17,7 @@ const ALLOWED_ATTRS = {
   span: ['class'],
   code: ['class'],
   pre: ['class'],
+  img: ['src', 'alt'],
 };
 
 function sanitizeHTML(html) {
@@ -33,7 +34,7 @@ function sanitizeHTML(html) {
     const isClosing = match.startsWith('</');
     if (isClosing) return `</${lower}>`;
 
-    const selfClosing = ['br', 'hr'].includes(lower);
+    const selfClosing = ['br', 'hr', 'img'].includes(lower);
     const allowed = ALLOWED_ATTRS[lower] || [];
     let cleaned = '';
 
@@ -43,6 +44,7 @@ function sanitizeHTML(html) {
       if (m) {
         const val = (m[1] ?? m[2] ?? m[3]).trim();
         if (attr === 'href' && /^javascript:/i.test(val)) continue;
+        if (attr === 'src' && (/^javascript:/i.test(val) || /^data:/i.test(val))) continue;
         cleaned += ` ${attr}="${val.replace(/"/g, '&quot;')}"`;
       }
     }
@@ -51,6 +53,27 @@ function sanitizeHTML(html) {
   });
 
   return html;
+}
+
+function processTagsInContent(html) {
+  // Strip any existing tag-inline spans so re-saves don't double-wrap
+  html = html.replace(/<span class="tag-inline">(#[a-zA-Z0-9_-]+)<\/span>/g, '$1');
+  let result = '';
+  let inTag = false;
+  for (let i = 0; i < html.length; i++) {
+    if (html[i] === '<') { inTag = true; result += html[i]; continue; }
+    if (html[i] === '>') { inTag = false; result += html[i]; continue; }
+    if (!inTag && html[i] === '#') {
+      const match = html.slice(i).match(/^#([a-zA-Z0-9_-]+)/);
+      if (match) {
+        result += `<span class="tag-inline">${match[0]}</span>`;
+        i += match[0].length - 1;
+        continue;
+      }
+    }
+    result += html[i];
+  }
+  return result;
 }
 
 function stripHTML(html) {
@@ -99,7 +122,7 @@ router.post('/', (req, res) => {
     id: uuidv4(),
     userId: req.session.userId,
     title: typeof title === 'string' ? title.trim().slice(0, 200) : '',
-    content: sanitizeHTML(content || ''),
+    content: processTagsInContent(sanitizeHTML(content || '')),
     tags: Array.isArray(tags) ? tags.map(t => String(t).trim()).filter(Boolean) : [],
     links: [],
     pinned: pinned === true,
@@ -127,7 +150,7 @@ router.put('/:id', (req, res) => {
 
   if (title !== undefined) note.title = String(title).trim().slice(0, 200);
   if (content !== undefined) {
-    note.content = sanitizeHTML(content);
+    note.content = processTagsInContent(sanitizeHTML(content));
     note.links = extractLinks(note.content);
   }
   if (Array.isArray(tags)) note.tags = tags.map(t => String(t).trim()).filter(Boolean);

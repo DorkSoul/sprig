@@ -133,3 +133,7 @@
 .note-body ul, .note-body ol { padding-left: 24px; margin: 6px 0; }
 .note-body p { margin: 4px 0; }
 .note-body hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+.note-body img { max-width: 100%; border-radius: var(--radius); display: block; margin: 8px 0; }
+.note-body .tag-inline { color: var(--accent); font-weight: 500; }
+
+.note-card-preview .tag-inline { color: var(--accent); }

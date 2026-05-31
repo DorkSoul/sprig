@@ -4,7 +4,7 @@ const express = require('express');
 const session = require('express-session');
 const FileStore = require('session-file-store')(session);
 const path = require('path');
-const { ensureDataDir, getSessionSecret, SESSIONS_DIR } = require('./lib/data');
+const { ensureDataDir, getSessionSecret, SESSIONS_DIR, DATA_DIR } = require('./lib/data');
 
 ensureDataDir();
 
@@ -23,11 +23,13 @@ app.use(session({
 }));
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(DATA_DIR, 'attachments')));
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/notes', require('./routes/notes'));
 app.use('/api/tags', require('./routes/tags'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/attachments', require('./routes/attachments'));
 
 app.get('*', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

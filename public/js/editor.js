@@ -1,4 +1,4 @@
-import { extractTagsFromHTML, renderTagChips, apiFetch } from './utils.js';
+import { extractTagsFromHTML, renderTagChips, apiFetch, parseMarkdown } from './utils.js';
 
 const Editor = (() => {
   let _notes = [];
@@ -59,6 +59,7 @@ const Editor = (() => {
       case 'codeblock': insertCodeBlock(bodyEl, sel); break;
       case 'link': insertLink(sel); break;
       case 'hr': insertHR(bodyEl); break;
+      case 'image': triggerImageUpload(bodyEl); break;
     }
   }
 
@@ -177,6 +178,57 @@ const Editor = (() => {
     newRange.setStart(p, 0);
     sel.removeAllRanges();
     sel.addRange(newRange);
+  }
+
+  function triggerImageUpload(bodyEl) {
+    const input = document.getElementById('image-upload-input');
+    const savedRange = saveRange();
+    input.onchange = async () => {
+      const file = input.files[0];
+      if (!file) return;
+      input.value = '';
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/attachments', {
+        method: 'POST',
+        credentials: 'same-origin',
+        body: form,
+      });
+      if (!res.ok) return;
+      const { url } = await res.json();
+      restoreRange(savedRange);
+      bodyEl.focus();
+      insertImageAtCursor(url, file.name);
+    };
+    input.click();
+  }
+
+  function insertImageAtCursor(src, alt) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = alt;
+    range.deleteContents();
+    range.insertNode(img);
+    range.setStartAfter(img);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  function saveRange() {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return null;
+    return sel.getRangeAt(0).cloneRange();
+  }
+
+  function restoreRange(range) {
+    if (!range) return;
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
   }
 
   function handleLinkAutocomplete(e, bodyEl) {
@@ -408,8 +460,25 @@ const Editor = (() => {
     localStorage.removeItem(key);
   }
 
+  function initImport(bodyEl, tagsPreviewEl) {
+    const input = document.getElementById('md-import-input');
+    document.getElementById('editor-import-btn').addEventListener('click', () => input.click());
+    input.addEventListener('change', () => {
+      const file = input.files[0];
+      if (!file) return;
+      input.value = '';
+      const reader = new FileReader();
+      reader.onload = e => {
+        bodyEl.innerHTML = parseMarkdown(e.target.result);
+        updateTagsPreview(bodyEl, tagsPreviewEl);
+      };
+      reader.readAsText(file);
+    });
+  }
+
   return {
     initToolbar,
+    initImport,
     getContent,
     setContent,
     clearContent,

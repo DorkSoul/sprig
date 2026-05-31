@@ -12,6 +12,8 @@ const NoteView = (() => {
       `Created ${formatDate(note.createdAt)}  ·  Updated ${formatDate(note.updatedAt)}`;
 
     document.getElementById('modal-edit-btn').onclick = () => { closeModal(); openEdit(id); };
+    document.getElementById('modal-export-html-btn').onclick = () => exportNote(note, 'html');
+    document.getElementById('modal-export-text-btn').onclick = () => exportNote(note, 'text');
     document.getElementById('modal-delete-btn').onclick = async () => {
       if (!confirm('Delete this note?')) return;
       const res = await apiFetch(`/api/notes/${id}`, { method: 'DELETE' });
@@ -50,6 +52,28 @@ const NoteView = (() => {
 
   function closeModal() {
     document.getElementById('note-modal').classList.add('hidden');
+  }
+
+  function exportNote(note, format) {
+    const slug = (note.title || note.id).replace(/[^a-z0-9]/gi, '_').toLowerCase().slice(0, 60);
+    let blob, filename;
+
+    if (format === 'html') {
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${note.title || 'Note'}</title><style>body{font-family:sans-serif;max-width:720px;margin:40px auto;padding:0 20px;line-height:1.6}pre{background:#f4f4f4;padding:12px;border-radius:4px;overflow-x:auto}code{background:#f4f4f4;padding:2px 4px;border-radius:3px}blockquote{border-left:3px solid #ccc;padding-left:12px;color:#555}img{max-width:100%}</style></head><body>${note.title ? `<h1>${note.title}</h1>` : ''}${note.content}</body></html>`;
+      blob = new Blob([html], { type: 'text/html' });
+      filename = `${slug}.html`;
+    } else {
+      const text = (note.title ? note.title + '\n\n' : '') +
+        note.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      blob = new Blob([text], { type: 'text/plain' });
+      filename = `${slug}.txt`;
+    }
+
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
   }
 
   function openEdit(id) {
@@ -122,7 +146,8 @@ const NoteView = (() => {
       <button data-cmd="code">\`</button>
       <button data-cmd="codeblock">\`\`\`</button>
       <button data-cmd="link">&#128279;</button>
-      <button data-cmd="hr">&#8213;</button>`;
+      <button data-cmd="hr">&#8213;</button>
+      <button data-cmd="image">&#128444;</button>`;
   }
 
   document.getElementById('modal-close-btn').addEventListener('click', closeModal);

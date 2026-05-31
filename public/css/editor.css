@@ -98,6 +98,8 @@
   text-decoration: underline;
   text-decoration-style: dotted;
 }
+#editor-body .tag-inline, #edit-editor-body .tag-inline { color: var(--accent); font-weight: 500; }
+#editor-body img, #edit-editor-body img { max-width: 100%; border-radius: var(--radius); display: block; margin: 6px 0; }
 
 #editor-footer {
   border-top: 1px solid var(--border);
@@ -163,6 +165,18 @@
 }
 
 .visibility-toggle input { width: auto; }
+
+.secondary-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 7px 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: color 0.1s, background 0.1s;
+}
+.secondary-btn:hover { color: var(--text); background: var(--border); }
 
 #link-autocomplete {
   position: fixed;
