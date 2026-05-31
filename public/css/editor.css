@@ -1,0 +1,216 @@
+#editor-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+#editor-toolbar,
+.editor-toolbar-clone {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+  flex-wrap: wrap;
+}
+
+#editor-toolbar button,
+.editor-toolbar-clone button {
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 13px;
+  color: var(--text-muted);
+  transition: background 0.1s, color 0.1s;
+  line-height: 1;
+}
+
+#editor-toolbar button:hover,
+.editor-toolbar-clone button:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+#editor-toolbar button.active,
+.editor-toolbar-clone button.active {
+  background: var(--accent);
+  color: #000;
+}
+
+.toolbar-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+#editor-body,
+#edit-editor-body {
+  min-height: 120px;
+  padding: 14px 16px;
+  outline: none;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text);
+  word-break: break-word;
+}
+
+#editor-body:empty::before,
+#edit-editor-body:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+#editor-body h1, #edit-editor-body h1 { font-size: 1.6em; margin: 0.4em 0; }
+#editor-body h2, #edit-editor-body h2 { font-size: 1.3em; margin: 0.4em 0; }
+#editor-body h3, #edit-editor-body h3 { font-size: 1.1em; margin: 0.4em 0; }
+#editor-body blockquote, #edit-editor-body blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 12px;
+  color: var(--text-muted);
+  margin: 8px 0;
+}
+#editor-body code, #edit-editor-body code {
+  background: var(--surface2);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: 'Fira Mono', 'Cascadia Code', monospace;
+  font-size: 0.88em;
+}
+#editor-body pre, #edit-editor-body pre {
+  background: var(--surface2);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+#editor-body pre code, #edit-editor-body pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.85em;
+}
+#editor-body a.note-link, #edit-editor-body a.note-link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+#editor-footer {
+  border-top: 1px solid var(--border);
+  padding: 10px 14px;
+  background: var(--surface2);
+}
+
+#editor-tags-preview,
+.editor-tags-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+  min-height: 0;
+}
+
+#editor-tags-preview:empty,
+.editor-tags-preview:empty {
+  display: none;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#editor-title,
+.edit-title-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 7px 12px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+#editor-save-btn,
+#edit-save-btn {
+  background: var(--accent);
+  color: #000;
+  font-weight: 600;
+  padding: 7px 18px;
+  border-radius: var(--radius);
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+#editor-save-btn:hover,
+#edit-save-btn:hover {
+  background: var(--accent-dim);
+}
+
+.visibility-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.visibility-toggle input { width: auto; }
+
+#link-autocomplete {
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  z-index: 300;
+  min-width: 220px;
+  max-width: 360px;
+  overflow: hidden;
+}
+
+#link-autocomplete-list {
+  list-style: none;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+#link-autocomplete-list li button {
+  width: 100%;
+  text-align: left;
+  padding: 9px 14px;
+  font-size: 13px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+
+#link-autocomplete-list li:last-child button { border-bottom: none; }
+#link-autocomplete-list li button:hover,
+#link-autocomplete-list li button.highlighted { background: var(--surface2); }
+
+.edit-title-input {
+  display: block;
+  margin: 14px 16px 0;
+  width: calc(100% - 32px);
+}
+
+#edit-editor-body {
+  min-height: 200px;
+  margin: 0 0;
+  max-height: 50vh;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+#edit-tags-preview {
+  padding: 10px 16px 0;
+}

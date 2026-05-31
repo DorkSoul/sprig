@@ -1,0 +1,110 @@
+.admin-modal-box {
+  max-width: 760px;
+}
+
+.admin-section {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-section h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  color: var(--text-muted);
+}
+
+#admin-users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+#admin-users-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+#admin-users-table td {
+  padding: 10px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+#admin-users-table tr:last-child td { border-bottom: none; }
+
+.admin-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #000;
+  font-weight: 600;
+}
+
+.admin-table-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.admin-table-actions button {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  transition: color 0.1s, background 0.1s;
+}
+
+.admin-table-actions button:hover { color: var(--text); background: var(--border); }
+
+#admin-create-user-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+#admin-create-user-form input[type="text"],
+#admin-create-user-form input[type="password"] {
+  width: 160px;
+  flex-shrink: 0;
+}
+
+#admin-create-user-form label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#admin-create-user-form label input { width: auto; }
+
+#admin-create-user-form button[type="submit"] {
+  background: var(--accent);
+  color: #000;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  flex-shrink: 0;
+}
+
+#graph-canvas {
+  width: 100%;
+  height: calc(100vh - var(--topbar-height) - 80px);
+  display: block;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
