@@ -7,5 +7,5 @@ COPY lib/ lib/
 COPY middleware/ middleware/
 COPY routes/ routes/
 COPY public/ public/
-EXPOSE 3000
+EXPOSE 7341
 CMD ["node", "server.js"]
