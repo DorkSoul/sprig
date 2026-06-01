@@ -133,6 +133,14 @@
   padding: 10px 14px;
   border-bottom: 1px solid var(--border);
   background: var(--surface2);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .editor-topbar #editor-title {
+    flex: 0 0 100%;
+    width: 100%;
+  }
 }
 
 .editor-sticky-header {
