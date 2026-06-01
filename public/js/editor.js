@@ -38,6 +38,17 @@ const Editor = (() => {
       insertTextAtCursor(text);
       updateTagsPreview(bodyEl, tagsPreviewEl);
     });
+
+    bodyEl.addEventListener('click', e => {
+      const a = e.target.closest('a');
+      if (!a || a.classList.contains('note-link')) return;
+      e.preventDefault();
+      if (e.ctrlKey || e.metaKey) {
+        window.open(a.href, '_blank', 'noopener');
+        return;
+      }
+      showLinkDialog(null, a);
+    });
   }
 
   function applyCommand(cmd, bodyEl) {
@@ -190,24 +201,91 @@ const Editor = (() => {
   }
 
   function insertLink(sel) {
-    const range = sel.getRangeAt(0);
-    const url = prompt('URL:');
-    if (!url) return;
+    const range = sel.getRangeAt(0).cloneRange();
+    showLinkDialog(range, null);
+  }
 
-    const a = document.createElement('a');
-    a.href = url;
-    a.target = '_blank';
-    a.rel = 'noopener';
-    if (!range.collapsed) {
-      try { range.surroundContents(a); } catch {
-        const frag = range.extractContents();
-        a.appendChild(frag);
-        range.insertNode(a);
-      }
+  function showLinkDialog(savedRange, existingAnchor) {
+    const dialog = document.getElementById('link-dialog');
+    const urlInput = document.getElementById('link-dialog-url');
+    const textInput = document.getElementById('link-dialog-text');
+    const saveBtn = document.getElementById('link-dialog-save');
+    const removeBtn = document.getElementById('link-dialog-remove');
+    const cancelBtn = document.getElementById('link-dialog-cancel');
+
+    urlInput.value = existingAnchor ? (existingAnchor.getAttribute('href') || '') : '';
+    textInput.value = existingAnchor ? existingAnchor.textContent : '';
+    removeBtn.classList.toggle('hidden', !existingAnchor);
+
+    const rect = existingAnchor
+      ? existingAnchor.getBoundingClientRect()
+      : (savedRange ? savedRange.getBoundingClientRect() : null);
+
+    if (rect) {
+      let top = rect.bottom + 6;
+      let left = rect.left;
+      if (top + 140 > window.innerHeight) top = rect.top - 146;
+      if (left + 300 > window.innerWidth) left = window.innerWidth - 308;
+      dialog.style.top = `${Math.max(6, top)}px`;
+      dialog.style.left = `${Math.max(6, left)}px`;
+      dialog.style.transform = '';
     } else {
-      a.textContent = url;
-      range.insertNode(a);
+      dialog.style.top = '30%';
+      dialog.style.left = '50%';
+      dialog.style.transform = 'translateX(-50%)';
     }
+
+    dialog.classList.remove('hidden');
+    urlInput.focus();
+    urlInput.select();
+
+    const close = () => {
+      dialog.classList.add('hidden');
+      saveBtn.onclick = null;
+      removeBtn.onclick = null;
+      cancelBtn.onclick = null;
+      dialog.onkeydown = null;
+    };
+
+    const save = () => {
+      const url = urlInput.value.trim();
+      if (!url) { urlInput.focus(); return; }
+      const text = textInput.value.trim();
+
+      if (existingAnchor) {
+        existingAnchor.href = url;
+        if (text) existingAnchor.textContent = text;
+      } else if (savedRange) {
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        if (text) {
+          a.textContent = text;
+          savedRange.deleteContents();
+          savedRange.insertNode(a);
+        } else if (!savedRange.collapsed) {
+          try { savedRange.surroundContents(a); } catch {
+            const frag = savedRange.extractContents();
+            a.appendChild(frag);
+            savedRange.insertNode(a);
+          }
+        } else {
+          a.textContent = url;
+          savedRange.insertNode(a);
+        }
+      }
+      close();
+    };
+
+    saveBtn.onclick = save;
+    removeBtn.onclick = () => { if (existingAnchor) unwrapNode(existingAnchor); close(); };
+    cancelBtn.onclick = close;
+
+    dialog.onkeydown = e => {
+      if (e.key === 'Enter') { e.preventDefault(); save(); }
+      if (e.key === 'Escape') { e.preventDefault(); close(); }
+    };
   }
 
   function insertHR(bodyEl) {

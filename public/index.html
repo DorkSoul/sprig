@@ -219,6 +219,17 @@
     <ul id="link-autocomplete-list"></ul>
   </div>
 
+  <!-- Link insert/edit dialog -->
+  <div id="link-dialog" class="hidden">
+    <input type="url" id="link-dialog-url" placeholder="URL" autocomplete="off">
+    <input type="text" id="link-dialog-text" placeholder="Display text (optional)" autocomplete="off">
+    <div class="link-dialog-footer">
+      <button id="link-dialog-remove" class="link-dialog-remove hidden">Remove</button>
+      <button id="link-dialog-cancel" class="link-dialog-cancel">Cancel</button>
+      <button id="link-dialog-save" class="link-dialog-save">Save</button>
+    </div>
+  </div>
+
   <script type="module" src="/js/main.js"></script>
 </body>
 </html>
