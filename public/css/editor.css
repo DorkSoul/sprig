@@ -234,6 +234,33 @@
 #link-autocomplete-list li button:hover,
 #link-autocomplete-list li button.highlighted { background: var(--surface2); }
 
+#img-resize-overlay {
+  position: fixed;
+  pointer-events: none;
+  z-index: 500;
+  box-shadow: 0 0 0 2px var(--accent);
+  user-select: none;
+}
+
+.img-handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  pointer-events: all;
+  transform: translate(-50%, -50%);
+}
+
+.img-handle[data-pos="nw"] { left:   0%; top:   0%; cursor: nwse-resize; }
+.img-handle[data-pos="n"]  { left:  50%; top:   0%; cursor: ns-resize; }
+.img-handle[data-pos="ne"] { left: 100%; top:   0%; cursor: nesw-resize; }
+.img-handle[data-pos="e"]  { left: 100%; top:  50%; cursor: ew-resize; }
+.img-handle[data-pos="se"] { left: 100%; top: 100%; cursor: nwse-resize; }
+.img-handle[data-pos="s"]  { left:  50%; top: 100%; cursor: ns-resize; }
+.img-handle[data-pos="sw"] { left:   0%; top: 100%; cursor: nesw-resize; }
+.img-handle[data-pos="w"]  { left:   0%; top:  50%; cursor: ew-resize; }
+
 #link-dialog {
   position: fixed;
   background: var(--surface);

@@ -5,8 +5,72 @@ const Editor = (() => {
   let _linkSearchStart = null;
   let _activeEditorBody = null;
   let _activeTagsPreview = null;
+  let _selectedImg = null;
+  let _imgDrag = null;
+  let _imgResizeInit = false;
+
+  function initImgResize() {
+    const overlay = document.getElementById('img-resize-overlay');
+    if (!overlay) return;
+
+    overlay.querySelectorAll('.img-handle').forEach(handle => {
+      handle.addEventListener('mousedown', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!_selectedImg) return;
+        const rect = _selectedImg.getBoundingClientRect();
+        _imgDrag = { pos: handle.dataset.pos, startX: e.clientX, startY: e.clientY, startW: rect.width, startH: rect.height };
+      });
+    });
+
+    document.addEventListener('mousemove', e => {
+      if (!_imgDrag || !_selectedImg) return;
+      const { pos, startX, startY, startW, startH } = _imgDrag;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (pos.includes('e')) _selectedImg.style.width = `${Math.max(20, startW + dx)}px`;
+      else if (pos.includes('w')) _selectedImg.style.width = `${Math.max(20, startW - dx)}px`;
+      if (pos.includes('s')) _selectedImg.style.height = `${Math.max(20, startH + dy)}px`;
+      else if (pos.includes('n')) _selectedImg.style.height = `${Math.max(20, startH - dy)}px`;
+      positionImgOverlay();
+    });
+
+    document.addEventListener('mouseup', () => { _imgDrag = null; });
+
+    document.addEventListener('mousedown', e => {
+      if (!_selectedImg) return;
+      if (e.target === _selectedImg || overlay.contains(e.target)) return;
+      deselectImg();
+    });
+
+    window.addEventListener('scroll', positionImgOverlay, true);
+    window.addEventListener('resize', positionImgOverlay);
+  }
+
+  function selectImg(img) {
+    _selectedImg = img;
+    positionImgOverlay();
+    document.getElementById('img-resize-overlay').classList.remove('hidden');
+  }
+
+  function deselectImg() {
+    _selectedImg = null;
+    _imgDrag = null;
+    document.getElementById('img-resize-overlay').classList.add('hidden');
+  }
+
+  function positionImgOverlay() {
+    if (!_selectedImg) return;
+    const rect = _selectedImg.getBoundingClientRect();
+    const overlay = document.getElementById('img-resize-overlay');
+    overlay.style.left = `${rect.left}px`;
+    overlay.style.top = `${rect.top}px`;
+    overlay.style.width = `${rect.width}px`;
+    overlay.style.height = `${rect.height}px`;
+  }
 
   function initToolbar(toolbarEl, bodyEl, tagsPreviewEl) {
+    if (!_imgResizeInit) { initImgResize(); _imgResizeInit = true; }
     _activeEditorBody = bodyEl;
     _activeTagsPreview = tagsPreviewEl;
 
@@ -51,6 +115,10 @@ const Editor = (() => {
     });
 
     bodyEl.addEventListener('click', e => {
+      if (e.target.tagName === 'IMG') {
+        selectImg(e.target);
+        return;
+      }
       const a = e.target.closest('a');
       if (!a || a.classList.contains('note-link')) return;
       e.preventDefault();
