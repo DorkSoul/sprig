@@ -93,6 +93,10 @@
   padding: 0;
   font-size: 0.85em;
 }
+#editor-body p, #edit-editor-body p { margin: 0.6em 0; }
+#editor-body p:first-child, #edit-editor-body p:first-child { margin-top: 0; }
+#editor-body p:last-child, #edit-editor-body p:last-child { margin-bottom: 0; }
+
 #editor-body a.note-link, #edit-editor-body a.note-link {
   color: var(--accent);
   text-decoration: underline;
