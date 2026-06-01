@@ -13,11 +13,11 @@ const ALLOWED_TAGS = new Set([
 ]);
 
 const ALLOWED_ATTRS = {
-  a: ['href'],
+  a: ['href', 'target', 'rel'],
   span: ['class'],
   code: ['class'],
   pre: ['class'],
-  img: ['src', 'alt'],
+  img: ['src', 'alt', 'style'],
 };
 
 function sanitizeHTML(html) {
@@ -45,6 +45,11 @@ function sanitizeHTML(html) {
         const val = (m[1] ?? m[2] ?? m[3]).trim();
         if (attr === 'href' && /^javascript:/i.test(val)) continue;
         if (attr === 'src' && (/^javascript:/i.test(val) || /^data:/i.test(val))) continue;
+        if (attr === 'style') {
+          const safe = (val.match(/(?:width|height)\s*:\s*[\d.]+(?:px|%)?/gi) || []).join('; ');
+          if (safe) cleaned += ` style="${safe}"`;
+          continue;
+        }
         cleaned += ` ${attr}="${val.replace(/"/g, '&quot;')}"`;
       }
     }
@@ -56,24 +61,28 @@ function sanitizeHTML(html) {
 }
 
 function processTagsInContent(html) {
-  // Strip any existing tag-inline spans so re-saves don't double-wrap
   html = html.replace(/<span class="tag-inline">(#[a-zA-Z0-9_-]+)<\/span>/g, '$1');
-  let result = '';
-  let inTag = false;
-  for (let i = 0; i < html.length; i++) {
-    if (html[i] === '<') { inTag = true; result += html[i]; continue; }
-    if (html[i] === '>') { inTag = false; result += html[i]; continue; }
-    if (!inTag && html[i] === '#') {
-      const match = html.slice(i).match(/^#([a-zA-Z0-9_-]+)/);
-      if (match) {
-        result += `<span class="tag-inline">${match[0]}</span>`;
-        i += match[0].length - 1;
-        continue;
-      }
-    }
-    result += html[i];
+
+  // Only wrap #tags in the last non-empty <p> block, and only if that block
+  // is composed entirely of #tag tokens (no other text).
+  const pRe = /<p(?:[^>]*)>([\s\S]*?)<\/p>/gi;
+  let lastP = null;
+  let m;
+  while ((m = pRe.exec(html)) !== null) {
+    const text = m[1].replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+    if (text) lastP = { index: m.index, length: m[0].length, outer: m[0], inner: m[1] };
   }
-  return result;
+
+  if (!lastP) return html;
+
+  const blockText = lastP.inner.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+  if (!/^(#[a-zA-Z0-9_-]+\s*)+$/.test(blockText)) return html;
+
+  const taggedInner = lastP.inner.replace(/#([a-zA-Z0-9_-]+)/g,
+    '<span class="tag-inline">#$1</span>');
+  return html.slice(0, lastP.index)
+    + lastP.outer.replace(lastP.inner, taggedInner)
+    + html.slice(lastP.index + lastP.length);
 }
 
 function stripHTML(html) {

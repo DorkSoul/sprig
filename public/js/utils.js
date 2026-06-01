@@ -32,8 +32,18 @@ export async function apiFetch(url, opts = {}) {
 }
 
 export function extractTagsFromHTML(html) {
-  const text = html.replace(/<[^>]+>/g, ' ');
-  const matches = text.match(/#([a-zA-Z0-9_-]+)/g) || [];
+  // Only treat #words as tags if they appear in the last non-empty paragraph
+  // and that paragraph contains nothing but #tag tokens.
+  const pRe = /<p(?:[^>]*)>([\s\S]*?)<\/p>/gi;
+  let lastText = null;
+  let m;
+  while ((m = pRe.exec(html)) !== null) {
+    const text = m[1].replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+    if (text) lastText = text;
+  }
+  if (!lastText) return [];
+  if (!/^(#[a-zA-Z0-9_-]+\s*)+$/.test(lastText)) return [];
+  const matches = lastText.match(/#[a-zA-Z0-9_-]+/g) || [];
   return [...new Set(matches.map(t => t.slice(1).toLowerCase()))];
 }
 

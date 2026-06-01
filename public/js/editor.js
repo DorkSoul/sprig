@@ -28,10 +28,20 @@ const Editor = (() => {
       const { pos, startX, startY, startW, startH } = _imgDrag;
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
-      if (pos.includes('e')) _selectedImg.style.width = `${Math.max(20, startW + dx)}px`;
-      else if (pos.includes('w')) _selectedImg.style.width = `${Math.max(20, startW - dx)}px`;
-      if (pos.includes('s')) _selectedImg.style.height = `${Math.max(20, startH + dy)}px`;
-      else if (pos.includes('n')) _selectedImg.style.height = `${Math.max(20, startH - dy)}px`;
+      const isCorner = (pos.length === 2);
+
+      if (isCorner) {
+        const dxRel = pos.includes('e') ? dx / startW : -dx / startW;
+        const dyRel = pos.includes('s') ? dy / startH : -dy / startH;
+        const scale = Math.max(0.05, 1 + (dxRel + dyRel) / 2);
+        _selectedImg.style.width = `${Math.max(20, startW * scale)}px`;
+        _selectedImg.style.height = `${Math.max(20, startH * scale)}px`;
+      } else {
+        if (pos === 'e') _selectedImg.style.width = `${Math.max(20, startW + dx)}px`;
+        else if (pos === 'w') _selectedImg.style.width = `${Math.max(20, startW - dx)}px`;
+        else if (pos === 's') _selectedImg.style.height = `${Math.max(20, startH + dy)}px`;
+        else if (pos === 'n') _selectedImg.style.height = `${Math.max(20, startH - dy)}px`;
+      }
       positionImgOverlay();
     });
 
@@ -41,6 +51,15 @@ const Editor = (() => {
       if (!_selectedImg) return;
       if (e.target === _selectedImg || overlay.contains(e.target)) return;
       deselectImg();
+    });
+
+    document.addEventListener('keydown', e => {
+      if (!_selectedImg) return;
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        _selectedImg.remove();
+        deselectImg();
+      }
     });
 
     window.addEventListener('scroll', positionImgOverlay, true);
