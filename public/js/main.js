@@ -25,6 +25,7 @@ Auth.init(async userData => {
 
   initInlineEditor();
   initSearch();
+  initLayoutToggle();
 });
 
 function initInlineEditor() {
@@ -76,6 +77,27 @@ function initInlineEditor() {
       e.preventDefault();
       saveBtn.click();
     }
+  });
+}
+
+function initLayoutToggle() {
+  const btn = document.getElementById('layout-toggle');
+  const views = ['feed-view', 'public-view', 'search-view'].map(id => document.getElementById(id));
+  const KEY = 'sprig_feed_layout';
+
+  function apply(masonry) {
+    views.forEach(el => el?.classList.toggle('masonry', masonry));
+    btn.innerHTML = masonry ? '&#8801;' : '&#8862;';
+    btn.title = masonry ? 'List layout' : 'Masonry layout';
+    btn.classList.toggle('layout-active', masonry);
+  }
+
+  apply(localStorage.getItem(KEY) === 'masonry');
+
+  btn.addEventListener('click', () => {
+    const masonry = !document.getElementById('feed-view').classList.contains('masonry');
+    apply(masonry);
+    localStorage.setItem(KEY, masonry ? 'masonry' : 'list');
   });
 }
 

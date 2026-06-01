@@ -19,6 +19,48 @@
   width: 100%;
 }
 
+/* Masonry layout */
+#feed-view.masonry,
+#public-view.masonry,
+#search-view.masonry {
+  max-width: none;
+}
+
+#feed-view.masonry #editor-container {
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#feed-view.masonry #note-feed,
+#public-view.masonry #public-feed,
+#search-view.masonry #search-feed {
+  display: block;
+  columns: 2;
+  column-gap: 14px;
+}
+
+.masonry .note-card {
+  break-inside: avoid;
+  margin-bottom: 14px;
+}
+
+@media (min-width: 1100px) {
+  #feed-view.masonry #note-feed,
+  #public-view.masonry #public-feed,
+  #search-view.masonry #search-feed {
+    columns: 3;
+  }
+}
+
+@media (max-width: 640px) {
+  #feed-view.masonry #note-feed,
+  #public-view.masonry #public-feed,
+  #search-view.masonry #search-feed {
+    columns: 1;
+  }
+}
+
 .empty-state {
   text-align: center;
   color: var(--text-muted);

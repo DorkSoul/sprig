@@ -63,6 +63,7 @@
 }
 
 .icon-btn:hover { color: var(--text); background: var(--surface2); }
+.icon-btn.layout-active { color: var(--accent); }
 
 .user-btn {
   width: 34px;
