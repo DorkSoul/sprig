@@ -20,6 +20,8 @@ const NoteView = (() => {
       if (res?.ok) { closeModal(); await window._feed?.refresh(); }
     };
 
+    addCollapsibleHeadings(document.getElementById('modal-content'));
+
     document.getElementById('modal-content').querySelectorAll('a.note-link').forEach(a => {
       a.addEventListener('click', e => {
         e.preventDefault();
@@ -47,6 +49,76 @@ const NoteView = (() => {
     ).join('');
     list.querySelectorAll('button').forEach(btn => {
       btn.addEventListener('click', () => { closeModal(); setTimeout(() => open(btn.dataset.id), 50); });
+    });
+  }
+
+  function addCollapsibleHeadings(container) {
+    const children = Array.from(container.children);
+    const headingTags = new Set(['H1', 'H2', 'H3']);
+    const headingLevel = { H1: 1, H2: 2, H3: 3 };
+
+    const hasContent = children.some((el, i) => {
+      if (!headingTags.has(el.tagName)) return false;
+      const level = headingLevel[el.tagName];
+      for (let j = i + 1; j < children.length; j++) {
+        const next = children[j];
+        if (headingTags.has(next.tagName) && headingLevel[next.tagName] <= level) break;
+        return true;
+      }
+      return false;
+    });
+
+    if (!hasContent) return;
+
+    children.forEach((el, i) => {
+      if (!headingTags.has(el.tagName)) return;
+      const level = headingLevel[el.tagName];
+
+      let hasSectionContent = false;
+      for (let j = i + 1; j < children.length; j++) {
+        const next = children[j];
+        if (headingTags.has(next.tagName) && headingLevel[next.tagName] <= level) break;
+        hasSectionContent = true;
+        break;
+      }
+      if (!hasSectionContent) return;
+
+      const btn = document.createElement('button');
+      btn.className = 'heading-toggle';
+      btn.setAttribute('aria-label', 'Toggle section');
+      btn.textContent = '▼';
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const collapsed = btn.textContent === '▶';
+        btn.textContent = collapsed ? '▼' : '▶';
+        el.dataset.collapsed = collapsed ? '' : 'true';
+        updateSectionVisibility(Array.from(container.children));
+      });
+
+      el.insertBefore(btn, el.firstChild);
+    });
+  }
+
+  function updateSectionVisibility(children) {
+    const headingTags = new Set(['H1', 'H2', 'H3']);
+    const headingLevel = { H1: 1, H2: 2, H3: 3 };
+    let activeCollapsedLevel = null;
+
+    children.forEach(el => {
+      if (headingTags.has(el.tagName)) {
+        const level = headingLevel[el.tagName];
+        if (activeCollapsedLevel !== null && level > activeCollapsedLevel) {
+          el.style.display = 'none';
+          return;
+        }
+        activeCollapsedLevel = null;
+        el.style.display = '';
+        if (el.dataset.collapsed === 'true') {
+          activeCollapsedLevel = level;
+        }
+      } else {
+        el.style.display = activeCollapsedLevel !== null ? 'none' : '';
+      }
     });
   }
 
