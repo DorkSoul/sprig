@@ -133,6 +133,14 @@
   background: var(--surface2);
 }
 
+.editor-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-radius: var(--radius) var(--radius) 0 0;
+  overflow: hidden;
+}
+
 #editor-title,
 .edit-title-input {
   flex: 1;
