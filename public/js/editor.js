@@ -14,7 +14,7 @@ const Editor = (() => {
       btn.addEventListener('mousedown', e => {
         e.preventDefault();
         bodyEl.focus();
-        applyCommand(btn.dataset.cmd, bodyEl);
+        applyCommand(btn.dataset.cmd, bodyEl, btn);
         updateToolbarState(toolbarEl, bodyEl);
         updateTagsPreview(bodyEl, tagsPreviewEl);
       });
@@ -33,6 +33,17 @@ const Editor = (() => {
     });
 
     bodyEl.addEventListener('paste', e => {
+      const items = e.clipboardData?.items;
+      if (items) {
+        for (const item of items) {
+          if (item.type.startsWith('image/')) {
+            e.preventDefault();
+            const file = item.getAsFile();
+            if (file) uploadImageFile(file, bodyEl);
+            return;
+          }
+        }
+      }
       e.preventDefault();
       const text = e.clipboardData.getData('text/plain');
       insertTextAtCursor(text);
@@ -51,7 +62,7 @@ const Editor = (() => {
     });
   }
 
-  function applyCommand(cmd, bodyEl) {
+  function applyCommand(cmd, bodyEl, triggerEl) {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return;
 
@@ -68,7 +79,7 @@ const Editor = (() => {
       case 'ul': toggleList('ul', bodyEl, sel); break;
       case 'ol': toggleList('ol', bodyEl, sel); break;
       case 'codeblock': insertCodeBlock(bodyEl, sel); break;
-      case 'link': insertLink(sel); break;
+      case 'link': insertLink(sel, triggerEl); break;
       case 'hr': insertHR(bodyEl); break;
       case 'image': triggerImageUpload(bodyEl); break;
     }
@@ -200,12 +211,12 @@ const Editor = (() => {
     sel.addRange(newRange);
   }
 
-  function insertLink(sel) {
+  function insertLink(sel, triggerEl) {
     const range = sel.getRangeAt(0).cloneRange();
-    showLinkDialog(range, null);
+    showLinkDialog(range, null, triggerEl);
   }
 
-  function showLinkDialog(savedRange, existingAnchor) {
+  function showLinkDialog(savedRange, existingAnchor, triggerEl) {
     const dialog = document.getElementById('link-dialog');
     const urlInput = document.getElementById('link-dialog-url');
     const textInput = document.getElementById('link-dialog-text');
@@ -217,14 +228,21 @@ const Editor = (() => {
     textInput.value = existingAnchor ? existingAnchor.textContent : '';
     removeBtn.classList.toggle('hidden', !existingAnchor);
 
-    const rect = existingAnchor
-      ? existingAnchor.getBoundingClientRect()
-      : (savedRange ? savedRange.getBoundingClientRect() : null);
+    let posRect = null;
+    if (existingAnchor) {
+      posRect = existingAnchor.getBoundingClientRect();
+    } else if (savedRange) {
+      const rects = savedRange.getClientRects();
+      posRect = rects.length ? rects[rects.length - 1] : null;
+    }
+    if ((!posRect || posRect.height === 0) && triggerEl) {
+      posRect = triggerEl.getBoundingClientRect();
+    }
 
-    if (rect) {
-      let top = rect.bottom + 6;
-      let left = rect.left;
-      if (top + 140 > window.innerHeight) top = rect.top - 146;
+    if (posRect && posRect.height > 0) {
+      let top = posRect.bottom + 6;
+      let left = posRect.left;
+      if (top + 140 > window.innerHeight) top = posRect.top - 146;
       if (left + 300 > window.innerWidth) left = window.innerWidth - 308;
       dialog.style.top = `${Math.max(6, top)}px`;
       dialog.style.left = `${Math.max(6, left)}px`;
@@ -292,16 +310,42 @@ const Editor = (() => {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return;
     const range = sel.getRangeAt(0);
+    const block = closestBlock(range.commonAncestorContainer, bodyEl);
     const hr = document.createElement('hr');
-    const p = document.createElement('p');
-    p.innerHTML = '<br>';
-    range.collapse(false);
-    range.insertNode(p);
-    range.insertNode(hr);
+
+    if (block) {
+      block.after(hr);
+    } else {
+      range.collapse(false);
+      range.insertNode(hr);
+    }
+
+    let target = hr.nextElementSibling;
+    if (!target) {
+      target = document.createElement('p');
+      target.innerHTML = '<br>';
+      hr.after(target);
+    }
+
     const newRange = document.createRange();
-    newRange.setStart(p, 0);
+    newRange.setStart(target, 0);
+    newRange.collapse(true);
     sel.removeAllRanges();
     sel.addRange(newRange);
+  }
+
+  async function uploadImageFile(file, bodyEl) {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch('/api/attachments', {
+      method: 'POST',
+      credentials: 'same-origin',
+      body: form,
+    });
+    if (!res.ok) return;
+    const { url } = await res.json();
+    bodyEl.focus();
+    insertImageAtCursor(url, file.name || 'image');
   }
 
   function triggerImageUpload(bodyEl) {
@@ -311,18 +355,8 @@ const Editor = (() => {
       const file = input.files[0];
       if (!file) return;
       input.value = '';
-      const form = new FormData();
-      form.append('file', file);
-      const res = await fetch('/api/attachments', {
-        method: 'POST',
-        credentials: 'same-origin',
-        body: form,
-      });
-      if (!res.ok) return;
-      const { url } = await res.json();
       restoreRange(savedRange);
-      bodyEl.focus();
-      insertImageAtCursor(url, file.name);
+      await uploadImageFile(file, bodyEl);
     };
     input.click();
   }
