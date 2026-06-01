@@ -36,7 +36,7 @@ button {
   color: var(--text);
 }
 
-input, textarea {
+input:not([type="checkbox"]), textarea {
   font-family: inherit;
   font-size: 14px;
   background: var(--surface2);
@@ -48,7 +48,19 @@ input, textarea {
   width: 100%;
 }
 
-input:focus, textarea:focus {
+input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+input:not([type="checkbox"]):focus, textarea:focus {
   border-color: var(--accent);
 }
 

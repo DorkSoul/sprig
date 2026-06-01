@@ -9,7 +9,7 @@ const router = express.Router();
 
 const ALLOWED_TAGS = new Set([
   'p','br','strong','em','u','s','h1','h2','h3',
-  'ul','ol','li','blockquote','code','pre','a','hr','span','img',
+  'ul','ol','li','blockquote','code','pre','a','hr','span','img','input',
 ]);
 
 const ALLOWED_ATTRS = {
@@ -18,6 +18,7 @@ const ALLOWED_ATTRS = {
   code: ['class'],
   pre: ['class'],
   img: ['src', 'alt', 'style'],
+  input: ['type', 'checked'],
 };
 
 function sanitizeHTML(html) {
@@ -34,17 +35,22 @@ function sanitizeHTML(html) {
     const isClosing = match.startsWith('</');
     if (isClosing) return `</${lower}>`;
 
-    const selfClosing = ['br', 'hr', 'img'].includes(lower);
+    const selfClosing = ['br', 'hr', 'img', 'input'].includes(lower);
     const allowed = ALLOWED_ATTRS[lower] || [];
     let cleaned = '';
 
     for (const attr of allowed) {
+      if (attr === 'checked') {
+        if (/\bchecked\b/i.test(attrs)) cleaned += ' checked';
+        continue;
+      }
       const re = new RegExp(`\\b${attr}\\s*=\\s*(?:"([^"]*?)"|'([^']*?)'|([^\\s>]+))`, 'i');
       const m = attrs.match(re);
       if (m) {
         const val = (m[1] ?? m[2] ?? m[3]).trim();
         if (attr === 'href' && /^javascript:/i.test(val)) continue;
         if (attr === 'src' && (/^javascript:/i.test(val) || /^data:/i.test(val))) continue;
+        if (attr === 'type' && lower === 'input' && val.toLowerCase() !== 'checkbox') continue;
         if (attr === 'style') {
           const safe = (val.match(/(?:width|height)\s*:\s*[\d.]+(?:px|%)?/gi) || []).join('; ');
           if (safe) cleaned += ` style="${safe}"`;
@@ -63,26 +69,25 @@ function sanitizeHTML(html) {
 function processTagsInContent(html) {
   html = html.replace(/<span class="tag-inline">(#[a-zA-Z0-9_-]+)<\/span>/g, '$1');
 
-  // Only wrap #tags in the last non-empty <p> block, and only if that block
-  // is composed entirely of #tag tokens (no other text).
-  const pRe = /<p(?:[^>]*)>([\s\S]*?)<\/p>/gi;
-  let lastP = null;
+  // Walk forward through all block/line boundaries (<br>, </p>, </li>, etc.)
+  // tracking the last boundary that has non-empty text after it.
+  const boundaryRe = /<br\s*\/?>|<\/(?:p|li|h[1-6]|blockquote|pre|div)>/gi;
+  let splitPos = 0;
   let m;
-  while ((m = pRe.exec(html)) !== null) {
-    const text = m[1].replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
-    if (text) lastP = { index: m.index, length: m[0].length, outer: m[0], inner: m[1] };
+  while ((m = boundaryRe.exec(html)) !== null) {
+    const after = m.index + m[0].length;
+    const textAfter = html.slice(after).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+    if (textAfter) splitPos = after;
   }
 
-  if (!lastP) return html;
+  const suffix = html.slice(splitPos);
+  const suffixText = suffix.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
 
-  const blockText = lastP.inner.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
-  if (!/^(#[a-zA-Z0-9_-]+\s*)+$/.test(blockText)) return html;
+  if (!suffixText || !/^(#[a-zA-Z0-9_-]+\s*)+$/.test(suffixText)) return html;
 
-  const taggedInner = lastP.inner.replace(/#([a-zA-Z0-9_-]+)/g,
+  const taggedSuffix = suffix.replace(/#([a-zA-Z0-9_-]+)/g,
     '<span class="tag-inline">#$1</span>');
-  return html.slice(0, lastP.index)
-    + lastP.outer.replace(lastP.inner, taggedInner)
-    + html.slice(lastP.index + lastP.length);
+  return html.slice(0, splitPos) + taggedSuffix;
 }
 
 function stripHTML(html) {

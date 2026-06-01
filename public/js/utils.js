@@ -32,18 +32,21 @@ export async function apiFetch(url, opts = {}) {
 }
 
 export function extractTagsFromHTML(html) {
-  // Only treat #words as tags if they appear in the last non-empty paragraph
-  // and that paragraph contains nothing but #tag tokens.
-  const pRe = /<p(?:[^>]*)>([\s\S]*?)<\/p>/gi;
-  let lastText = null;
-  let m;
-  while ((m = pRe.exec(html)) !== null) {
-    const text = m[1].replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
-    if (text) lastText = text;
-  }
-  if (!lastText) return [];
-  if (!/^(#[a-zA-Z0-9_-]+\s*)+$/.test(lastText)) return [];
-  const matches = lastText.match(/#[a-zA-Z0-9_-]+/g) || [];
+  // Split on block boundaries and <br> to get individual lines, then check
+  // if the last non-empty line is composed entirely of #tag tokens.
+  const lines = html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(?:p|li|h[1-6]|blockquote|pre|div)>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .split('\n')
+    .map(l => l.trim())
+    .filter(Boolean);
+
+  if (!lines.length) return [];
+  const last = lines[lines.length - 1];
+  if (!/^(#[a-zA-Z0-9_-]+\s*)+$/.test(last)) return [];
+  const matches = last.match(/#[a-zA-Z0-9_-]+/g) || [];
   return [...new Set(matches.map(t => t.slice(1).toLowerCase()))];
 }
 

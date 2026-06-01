@@ -163,3 +163,17 @@
 .heading-toggle:hover { opacity: 1; background: var(--surface2); }
 
 .note-card-preview .tag-inline { color: var(--accent); }
+
+/* Checklist items */
+li:has(> input[type="checkbox"]) {
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin-left: -20px;
+}
+
+li:has(> input[type="checkbox"]:checked) {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}

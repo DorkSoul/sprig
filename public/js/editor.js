@@ -138,6 +138,13 @@ const Editor = (() => {
         selectImg(e.target);
         return;
       }
+      if (e.target.tagName === 'INPUT' && e.target.type === 'checkbox') {
+        setTimeout(() => {
+          if (e.target.checked) e.target.setAttribute('checked', '');
+          else e.target.removeAttribute('checked');
+        }, 0);
+        return;
+      }
       const a = e.target.closest('a');
       if (!a || a.classList.contains('note-link')) return;
       e.preventDefault();
@@ -165,6 +172,7 @@ const Editor = (() => {
       case 'blockquote': toggleBlock('blockquote', bodyEl, sel); break;
       case 'ul': toggleList('ul', bodyEl, sel); break;
       case 'ol': toggleList('ol', bodyEl, sel); break;
+      case 'checklist': insertChecklist(bodyEl, sel); break;
       case 'codeblock': insertCodeBlock(bodyEl, sel); break;
       case 'link': insertLink(sel, triggerEl); break;
       case 'hr': insertHR(bodyEl); break;
@@ -262,6 +270,45 @@ const Editor = (() => {
     const newRange = document.createRange();
     newRange.selectNodeContents(restoreTarget);
     newRange.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+  }
+
+  function insertChecklist(bodyEl, sel) {
+    const range = sel.getRangeAt(0);
+    const block = closestBlock(range.commonAncestorContainer, bodyEl);
+    const parentLi = block?.closest('li');
+
+    if (parentLi?.querySelector('input[type="checkbox"]')) {
+      const p = document.createElement('p');
+      p.textContent = parentLi.textContent.replace(/^\s*/, '');
+      (parentLi.closest('ul, ol') || parentLi).replaceWith(p);
+      const newRange = document.createRange();
+      newRange.selectNodeContents(p);
+      newRange.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+      return;
+    }
+
+    const list = document.createElement('ul');
+    const li = document.createElement('li');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    const text = document.createTextNode(' ' + (block ? block.textContent : ''));
+    li.appendChild(cb);
+    li.appendChild(text);
+    list.appendChild(li);
+
+    if (block) {
+      block.replaceWith(list);
+    } else {
+      range.insertNode(list);
+    }
+
+    const newRange = document.createRange();
+    newRange.setStart(text, 1);
+    newRange.collapse(true);
     sel.removeAllRanges();
     sel.addRange(newRange);
   }

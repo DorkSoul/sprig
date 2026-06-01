@@ -21,6 +21,7 @@ const NoteView = (() => {
     };
 
     addCollapsibleHeadings(document.getElementById('modal-content'));
+    wireCheckboxes(id);
 
     document.getElementById('modal-content').querySelectorAll('a.note-link').forEach(a => {
       a.addEventListener('click', e => {
@@ -49,6 +50,24 @@ const NoteView = (() => {
     ).join('');
     list.querySelectorAll('button').forEach(btn => {
       btn.addEventListener('click', () => { closeModal(); setTimeout(() => open(btn.dataset.id), 50); });
+    });
+  }
+
+  function wireCheckboxes(id) {
+    const content = document.getElementById('modal-content');
+    content.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', async () => {
+        if (cb.checked) cb.setAttribute('checked', '');
+        else cb.removeAttribute('checked');
+        const html = content.innerHTML;
+        const res = await apiFetch(`/api/notes/${id}`, { method: 'PUT', body: { content: html } });
+        if (res?.ok) {
+          const updated = await res.json();
+          const idx = (window._notes || []).findIndex(n => n.id === id);
+          if (idx !== -1) window._notes[idx] = updated;
+          window._feed?.refresh();
+        }
+      });
     });
   }
 
@@ -213,6 +232,7 @@ const NoteView = (() => {
       <span class="toolbar-sep"></span>
       <button data-cmd="ul">&#8226;&#8212;</button>
       <button data-cmd="ol">1&#8212;</button>
+      <button data-cmd="checklist">&#9745;</button>
       <button data-cmd="blockquote">&#10078;</button>
       <span class="toolbar-sep"></span>
       <button data-cmd="code">\`</button>
