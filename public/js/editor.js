@@ -65,10 +65,25 @@ const Editor = (() => {
 
   function wrapInline(tag, sel) {
     const range = sel.getRangeAt(0);
-    if (range.collapsed) return;
-
     const ancestor = range.commonAncestorContainer;
     const existing = closestTag(ancestor, tag);
+
+    if (range.collapsed) {
+      if (existing) {
+        unwrapNode(existing);
+        return;
+      }
+      const wrapper = document.createElement(tag);
+      wrapper.appendChild(document.createTextNode('​'));
+      range.insertNode(wrapper);
+      const newRange = document.createRange();
+      newRange.setStart(wrapper.firstChild, 0);
+      newRange.setEnd(wrapper.firstChild, wrapper.firstChild.length);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+      return;
+    }
+
     if (existing) {
       unwrapNode(existing);
       return;
@@ -144,6 +159,19 @@ const Editor = (() => {
 
   function insertCodeBlock(bodyEl, sel) {
     const range = sel.getRangeAt(0);
+    const inPre = closestTag(range.commonAncestorContainer, 'pre');
+    if (inPre) {
+      const p = document.createElement('p');
+      p.textContent = inPre.textContent;
+      inPre.replaceWith(p);
+      const newRange = document.createRange();
+      newRange.selectNodeContents(p);
+      newRange.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+      return;
+    }
+
     const block = closestBlock(range.commonAncestorContainer, bodyEl);
     const pre = document.createElement('pre');
     const code = document.createElement('code');
@@ -400,9 +428,11 @@ const Editor = (() => {
       codeblock: ['pre'],
     };
 
+    const inPre = !!closestTag(node, 'pre');
     toolbarEl.querySelectorAll('[data-cmd]').forEach(btn => {
       const tags = cmdMap[btn.dataset.cmd];
       if (!tags) { btn.classList.remove('active'); return; }
+      if (btn.dataset.cmd === 'code' && inPre) { btn.classList.remove('active'); return; }
       const active = tags.some(tag => !!closestTag(node, tag));
       btn.classList.toggle('active', active);
     });
