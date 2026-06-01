@@ -93,15 +93,15 @@ const Editor = (() => {
     const block = closestBlock(range.commonAncestorContainer, bodyEl);
     if (!block) return;
 
-    if (block.tagName.toLowerCase() === tag) {
-      const p = document.createElement('p');
-      p.innerHTML = block.innerHTML;
-      block.replaceWith(p);
-    } else {
-      const el = document.createElement(tag);
-      el.innerHTML = block.innerHTML;
-      block.replaceWith(el);
-    }
+    const newEl = document.createElement(block.tagName.toLowerCase() === tag ? 'p' : tag);
+    newEl.innerHTML = block.innerHTML;
+    block.replaceWith(newEl);
+
+    const newRange = document.createRange();
+    newRange.selectNodeContents(newEl);
+    newRange.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
   }
 
   function toggleList(listTag, bodyEl, sel) {
@@ -110,18 +110,36 @@ const Editor = (() => {
     if (!block) return;
 
     const parentList = block.closest('ul, ol');
-    if (parentList && parentList.tagName.toLowerCase() === listTag) {
-      const p = document.createElement('p');
-      p.innerHTML = block.innerHTML;
-      parentList.replaceWith(p);
-      return;
+    let restoreTarget;
+
+    if (parentList) {
+      if (parentList.tagName.toLowerCase() === listTag) {
+        // Toggle off — unwrap back to paragraph
+        const p = document.createElement('p');
+        p.innerHTML = block.innerHTML;
+        parentList.replaceWith(p);
+        restoreTarget = p;
+      } else {
+        // Switch list type in place (ul ↔ ol) without nesting
+        const newList = document.createElement(listTag);
+        newList.innerHTML = parentList.innerHTML;
+        parentList.replaceWith(newList);
+        restoreTarget = newList.querySelector('li') || newList;
+      }
+    } else {
+      const list = document.createElement(listTag);
+      const li = document.createElement('li');
+      li.innerHTML = block.innerHTML;
+      list.appendChild(li);
+      block.replaceWith(list);
+      restoreTarget = li;
     }
 
-    const list = document.createElement(listTag);
-    const li = document.createElement('li');
-    li.innerHTML = block.innerHTML;
-    list.appendChild(li);
-    block.replaceWith(list);
+    const newRange = document.createRange();
+    newRange.selectNodeContents(restoreTarget);
+    newRange.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
   }
 
   function insertCodeBlock(bodyEl, sel) {
