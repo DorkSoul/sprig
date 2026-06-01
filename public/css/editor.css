@@ -101,19 +101,15 @@
 #editor-body .tag-inline, #edit-editor-body .tag-inline { color: var(--accent); font-weight: 500; }
 #editor-body img, #edit-editor-body img { max-width: 100%; border-radius: var(--radius); display: block; margin: 6px 0; }
 
-#editor-footer {
-  border-top: 1px solid var(--border);
-  padding: 10px 14px;
-  background: var(--surface2);
-}
-
 #editor-tags-preview,
 .editor-tags-preview {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 8px;
+  padding: 8px 14px;
   min-height: 0;
+  border-top: 1px solid var(--border);
+  background: var(--surface2);
 }
 
 #editor-tags-preview:empty,
@@ -125,6 +121,12 @@
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.editor-topbar {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
 }
 
 #editor-title,

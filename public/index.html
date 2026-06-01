@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sprig</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
@@ -76,6 +77,14 @@
         <div id="feed-view">
           <!-- Inline editor -->
           <div id="editor-container">
+            <div class="editor-actions editor-topbar">
+              <input type="text" id="editor-title" placeholder="Title (optional)">
+              <label class="visibility-toggle">
+                <input type="checkbox" id="editor-public"> Public
+              </label>
+              <button id="editor-import-btn" class="secondary-btn" title="Import Markdown file">Import .md</button>
+              <button id="editor-save-btn">Save</button>
+            </div>
             <div id="editor-toolbar">
               <button data-cmd="bold" title="Bold"><strong>B</strong></button>
               <button data-cmd="italic" title="Italic"><em>I</em></button>
@@ -97,17 +106,7 @@
               <button data-cmd="image" title="Insert image">&#128444;</button>
             </div>
             <div id="editor-body" contenteditable="true" data-placeholder="What's on your mind..."></div>
-            <div id="editor-footer">
-              <div id="editor-tags-preview"></div>
-              <div class="editor-actions">
-                <input type="text" id="editor-title" placeholder="Title (optional)">
-                <label class="visibility-toggle">
-                  <input type="checkbox" id="editor-public"> Public
-                </label>
-                <button id="editor-import-btn" class="secondary-btn" title="Import Markdown file">Import .md</button>
-                <button id="editor-save-btn">Save</button>
-              </div>
-            </div>
+            <div id="editor-tags-preview"></div>
           </div>
 
           <div id="note-feed"></div>

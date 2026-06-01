@@ -1,0 +1,118 @@
+<svg width="100%" viewBox="0 0 680 680" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>Sprig note-taking app icon</title>
+  <desc>App icon with transparent background — a botanical sprig growing from the center spine of a smaller open notebook</desc>
+  <defs>
+    <style>
+      .nb-cover { fill: #1A3D28; }
+      .nb-page  { fill: #F2EAD8; }
+      .nb-spine { fill: #112A1C; }
+      .nb-line  { stroke: #C8B898; stroke-width: 2.5; stroke-linecap: round; }
+      .nb-bind  { fill: #0D2016; }
+      .s-main   { fill: none; stroke: #2E5C38; stroke-width: 9; stroke-linecap: round; }
+      .s-br     { fill: none; stroke: #3A6E44; stroke-width: 5; stroke-linecap: round; }
+      .s-sm     { fill: none; stroke: #4A7E54; stroke-width: 3; stroke-linecap: round; }
+      .lf-a     { fill: #163D24; }
+      .lf-b     { fill: #1F5230; }
+      .lf-c     { fill: #286640; }
+      .vein     { fill: none; stroke: #0A2614; stroke-width: 1.4; stroke-linecap: round; opacity: 0.5; }
+      .bud      { fill: #4E8C62; }
+      .bud-tip  { fill: #2E6040; }
+      .berry    { fill: #142E1E; }
+      .berry-hi { fill: #4A7A58; opacity: 0.55; }
+    </style>
+  </defs>
+  <rect x="190" y="450" width="300" height="200" rx="10" class="nb-cover"/>
+  <rect x="190" y="450" width="300" height="200" rx="10" fill="none" stroke="#0D2016" stroke-width="2"/>
+  <rect x="326" y="446" width="28" height="208" class="nb-spine"/>
+  <rect x="198" y="458" width="124" height="184" rx="3" class="nb-page"/>
+  <rect x="358" y="458" width="124" height="184" rx="3" class="nb-page"/>
+  <line x1="210" y1="478" x2="314" y2="478" class="nb-line"/>
+  <line x1="210" y1="494" x2="314" y2="494" class="nb-line"/>
+  <line x1="210" y1="510" x2="314" y2="510" class="nb-line"/>
+  <line x1="210" y1="526" x2="314" y2="526" class="nb-line"/>
+  <line x1="210" y1="542" x2="314" y2="542" class="nb-line"/>
+  <line x1="210" y1="566" x2="314" y2="566" class="nb-line"/>
+  <line x1="210" y1="582" x2="314" y2="582" class="nb-line"/>
+  <line x1="210" y1="598" x2="314" y2="598" class="nb-line"/>
+  <line x1="210" y1="614" x2="300" y2="614" class="nb-line"/>
+  <line x1="210" y1="630" x2="314" y2="630" class="nb-line"/>
+  <line x1="366" y1="478" x2="474" y2="478" class="nb-line"/>
+  <line x1="366" y1="494" x2="474" y2="494" class="nb-line"/>
+  <line x1="366" y1="510" x2="474" y2="510" class="nb-line"/>
+  <line x1="366" y1="526" x2="474" y2="526" class="nb-line"/>
+  <line x1="366" y1="542" x2="474" y2="542" class="nb-line"/>
+  <line x1="366" y1="566" x2="474" y2="566" class="nb-line"/>
+  <line x1="366" y1="582" x2="474" y2="582" class="nb-line"/>
+  <line x1="366" y1="598" x2="474" y2="598" class="nb-line"/>
+  <line x1="366" y1="614" x2="460" y2="614" class="nb-line"/>
+  <line x1="366" y1="630" x2="474" y2="630" class="nb-line"/>
+  <rect x="333" y="446" width="6" height="208" class="nb-bind" rx="2"/>
+  <rect x="341" y="446" width="6" height="208" class="nb-bind" rx="2"/>
+  <circle cx="337" cy="468" r="4" fill="#0D2016"/>
+  <circle cx="337" cy="510" r="4" fill="#0D2016"/>
+  <circle cx="337" cy="552" r="4" fill="#0D2016"/>
+  <circle cx="337" cy="594" r="4" fill="#0D2016"/>
+  <circle cx="337" cy="636" r="4" fill="#0D2016"/>
+  <path class="s-main" d="M340 550 C340 510, 338 468, 340 428 C342 388, 350 358, 345 318 C340 278, 330 248, 337 210 C341 190, 344 168, 342 144"/>
+  <path class="s-br" d="M341 430 C314 416, 282 396, 254 372"/>
+  <path class="s-br" d="M342 422 C370 406, 400 386, 426 362"/>
+  <path class="s-br" d="M340 322 C314 308, 284 288, 258 266"/>
+  <path class="s-br" d="M341 314 C368 298, 396 278, 422 256"/>
+  <path class="s-br" d="M340 218 C318 206, 294 190, 270 172"/>
+  <path class="s-br" d="M341 210 C362 197, 386 180, 410 162"/>
+  <path class="s-sm" d="M341 158 C324 147, 306 134, 291 118"/>
+  <path class="s-sm" d="M342 150 C358 138, 375 124, 390 108"/>
+  <g transform="translate(224,348) rotate(-38)">
+    <path class="lf-a" d="M0,0 C-16,-12,-38,-22,-62,-17 C-82,-12,-89,2,-83,17 C-77,30,-58,42,-36,42 C-14,42,3,28,13,14 C18,5,12,-5,0,0 Z"/>
+    <path class="vein" d="M0,0 C-20,9,-50,20,-81,17"/>
+    <path class="vein" d="M-20,4 C-24,-5,-30,-14,-46,-16"/>
+    <path class="vein" d="M-44,22 C-46,11,-48,2,-46,-16"/>
+    <path class="vein" d="M-65,30 C-65,18,-69,7,-71,0"/>
+  </g>
+  <g transform="translate(456,336) rotate(36)">
+    <path class="lf-a" d="M0,0 C16,-12,38,-22,62,-17 C82,-12,89,2,83,17 C77,30,58,42,36,42 C14,42,-3,28,-13,14 C-18,5,-12,-5,0,0 Z"/>
+    <path class="vein" d="M0,0 C20,9,50,20,81,17"/>
+    <path class="vein" d="M20,4 C24,-5,30,-14,46,-16"/>
+    <path class="vein" d="M44,22 C46,11,48,2,46,-16"/>
+    <path class="vein" d="M65,30 C65,18,69,7,71,0"/>
+  </g>
+  <g transform="translate(228,242) rotate(-44)">
+    <path class="lf-b" d="M0,0 C-14,-13,-36,-24,-58,-19 C-78,-15,-86,0,-80,16 C-74,31,-55,43,-34,43 C-13,43,4,30,14,16 C19,7,13,-5,0,0 Z"/>
+    <path class="vein" d="M0,0 C-18,9,-48,22,-78,16"/>
+    <path class="vein" d="M-18,4 C-22,-6,-30,-15,-47,-18"/>
+    <path class="vein" d="M-44,23 C-46,12,-48,2,-47,-18"/>
+    <path class="vein" d="M-63,31 C-63,19,-67,8,-69,-1"/>
+  </g>
+  <g transform="translate(452,230) rotate(42)">
+    <path class="lf-b" d="M0,0 C14,-13,36,-24,58,-19 C78,-15,86,0,80,16 C74,31,55,43,34,43 C13,43,-4,30,-14,16 C-19,7,-13,-5,0,0 Z"/>
+    <path class="vein" d="M0,0 C18,9,48,22,78,16"/>
+    <path class="vein" d="M18,4 C22,-6,30,-15,47,-18"/>
+    <path class="vein" d="M44,23 C46,12,48,2,47,-18"/>
+    <path class="vein" d="M63,31 C63,19,67,8,69,-1"/>
+  </g>
+  <g transform="translate(244,148) rotate(-40)">
+    <path class="lf-c" d="M0,0 C-12,-12,-32,-22,-54,-17 C-72,-13,-78,2,-72,16 C-66,28,-50,38,-30,38 C-10,38,6,26,14,13 C18,5,12,-5,0,0 Z"/>
+    <path class="vein" d="M0,0 C-16,8,-42,18,-70,16"/>
+    <path class="vein" d="M-16,4 C-20,-5,-26,-13,-40,-15"/>
+    <path class="vein" d="M-38,20 C-40,10,-42,1,-40,-15"/>
+  </g>
+  <g transform="translate(436,136) rotate(38)">
+    <path class="lf-c" d="M0,0 C12,-12,32,-22,54,-17 C72,-13,78,2,72,16 C66,28,50,38,30,38 C10,38,-6,26,-14,13 C-18,5,-12,-5,0,0 Z"/>
+    <path class="vein" d="M0,0 C16,8,42,18,70,16"/>
+    <path class="vein" d="M16,4 C20,-5,26,-13,40,-15"/>
+    <path class="vein" d="M38,20 C40,10,42,1,40,-15"/>
+  </g>
+  <ellipse class="bud" cx="306" cy="104" rx="7" ry="11" transform="rotate(-18,306,104)"/>
+  <ellipse class="bud-tip" cx="305" cy="96" rx="5" ry="6" transform="rotate(-18,305,96)"/>
+  <ellipse class="bud" cx="375" cy="98" rx="7" ry="11" transform="rotate(16,375,98)"/>
+  <ellipse class="bud-tip" cx="376" cy="90" rx="5" ry="6" transform="rotate(16,376,90)"/>
+  <circle class="berry" cx="342" cy="126" r="10"/>
+  <circle class="berry-hi" cx="338" cy="120" r="4"/>
+  <circle class="berry" cx="329" cy="116" r="8"/>
+  <circle class="berry-hi" cx="326" cy="111" r="3"/>
+  <circle class="berry" cx="355" cy="118" r="8"/>
+  <circle class="berry-hi" cx="352" cy="113" r="3"/>
+  <path class="s-sm" d="M342 146 C341 136, 340 126, 342 116"/>
+  <ellipse cx="342" cy="111" rx="6" ry="9" fill="#4E8C62"/>
+  <ellipse cx="342" cy="104" rx="4" ry="5" fill="#2E6040"/>
+</svg>
