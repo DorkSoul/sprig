@@ -17,7 +17,14 @@
       <form id="setup-form" class="auth-form hidden">
         <h2>Create admin account</h2>
         <input type="text" id="setup-username" placeholder="Username" autocomplete="username">
-        <input type="password" id="setup-password" placeholder="Password (min 8 chars)" autocomplete="new-password">
+        <div class="pw-wrap">
+          <input type="password" id="setup-password" placeholder="Password (min 8 chars)" autocomplete="new-password">
+          <button type="button" class="pw-eye" data-target="setup-password" tabindex="-1">&#128065;</button>
+        </div>
+        <div class="pw-wrap">
+          <input type="password" id="setup-password-confirm" placeholder="Confirm password" autocomplete="new-password">
+          <button type="button" class="pw-eye" data-target="setup-password-confirm" tabindex="-1">&#128065;</button>
+        </div>
         <button type="submit">Create account</button>
         <p class="auth-error hidden" id="setup-error"></p>
       </form>
@@ -25,7 +32,10 @@
       <form id="login-form" class="auth-form hidden">
         <h2>Sign in</h2>
         <input type="text" id="login-username" placeholder="Username" autocomplete="username">
-        <input type="password" id="login-password" placeholder="Password" autocomplete="current-password">
+        <div class="pw-wrap">
+          <input type="password" id="login-password" placeholder="Password" autocomplete="current-password">
+          <button type="button" class="pw-eye" data-target="login-password" tabindex="-1">&#128065;</button>
+        </div>
         <button type="submit">Sign in</button>
         <p class="auth-error hidden" id="login-error"></p>
       </form>
@@ -200,7 +210,14 @@
             <h3>Create user</h3>
             <form id="admin-create-user-form">
               <input type="text" id="new-user-username" placeholder="Username">
-              <input type="password" id="new-user-password" placeholder="Password">
+              <div class="pw-wrap">
+                <input type="password" id="new-user-password" placeholder="Password">
+                <button type="button" class="pw-eye" data-target="new-user-password" tabindex="-1">&#128065;</button>
+              </div>
+              <div class="pw-wrap">
+                <input type="password" id="new-user-password-confirm" placeholder="Confirm password">
+                <button type="button" class="pw-eye" data-target="new-user-password-confirm" tabindex="-1">&#128065;</button>
+              </div>
               <label><input type="checkbox" id="new-user-admin"> Admin</label>
               <button type="submit">Create</button>
               <p class="auth-error hidden" id="admin-user-error"></p>

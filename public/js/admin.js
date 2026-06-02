@@ -62,8 +62,15 @@ const Admin = (() => {
     e.preventDefault();
     const username = document.getElementById('new-user-username').value.trim();
     const password = document.getElementById('new-user-password').value;
+    const confirm = document.getElementById('new-user-password-confirm').value;
     const isAdmin = document.getElementById('new-user-admin').checked;
     const errEl = document.getElementById('admin-user-error');
+
+    if (password !== confirm) {
+      errEl.textContent = 'Passwords do not match.';
+      errEl.classList.remove('hidden');
+      return;
+    }
 
     const res = await apiFetch('/api/admin/users', { method: 'POST', body: { username, password, isAdmin } });
     if (!res) return;
@@ -77,6 +84,7 @@ const Admin = (() => {
     errEl.classList.add('hidden');
     document.getElementById('new-user-username').value = '';
     document.getElementById('new-user-password').value = '';
+    document.getElementById('new-user-password-confirm').value = '';
     document.getElementById('new-user-admin').checked = false;
     await loadUsers();
   });

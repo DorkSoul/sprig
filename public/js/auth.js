@@ -45,11 +45,26 @@ const Auth = (() => {
     window.location.reload();
   }
 
+  document.querySelectorAll('.pw-eye').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById(btn.dataset.target);
+      if (!input) return;
+      input.type = input.type === 'password' ? 'text' : 'password';
+    });
+  });
+
   document.getElementById('setup-form').addEventListener('submit', async e => {
     e.preventDefault();
     const username = document.getElementById('setup-username').value.trim();
     const password = document.getElementById('setup-password').value;
+    const confirm = document.getElementById('setup-password-confirm').value;
     const errEl = document.getElementById('setup-error');
+
+    if (password !== confirm) {
+      errEl.textContent = 'Passwords do not match.';
+      errEl.classList.remove('hidden');
+      return;
+    }
 
     const res = await apiFetch('/api/auth/setup', { method: 'POST', body: { username, password } });
     if (!res) return;
