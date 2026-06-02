@@ -111,26 +111,41 @@ const Editor = (() => {
     bodyEl.addEventListener('mouseup', () => updateToolbarState(toolbarEl, bodyEl));
 
     bodyEl.addEventListener('keydown', e => {
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' || e.key === 'Backspace') {
         const sel = window.getSelection();
         if (sel && sel.rangeCount > 0) {
-          const node = sel.getRangeAt(0).commonAncestorContainer;
+          const range = sel.getRangeAt(0);
+          const node = range.commonAncestorContainer;
           const li = (node.nodeType === Node.TEXT_NODE ? node.parentNode : node).closest('li');
           if (li && li.querySelector('input[type="checkbox"]')) {
-            e.preventDefault();
-            const newLi = document.createElement('li');
-            const cb = document.createElement('input');
-            cb.type = 'checkbox';
-            const text = document.createTextNode('​');
-            newLi.appendChild(cb);
-            newLi.appendChild(text);
-            li.after(newLi);
-            const newRange = document.createRange();
-            newRange.setStart(text, text.length);
-            newRange.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(newRange);
-            return;
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              const newLi = document.createElement('li');
+              const cb = document.createElement('input');
+              cb.type = 'checkbox';
+              const text = document.createTextNode('​');
+              newLi.appendChild(cb);
+              newLi.appendChild(text);
+              li.after(newLi);
+              const newRange = document.createRange();
+              newRange.setStart(text, text.length);
+              newRange.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(newRange);
+              return;
+            }
+            if (e.key === 'Backspace' && range.collapsed) {
+              const checkbox = li.querySelector('input[type="checkbox"]');
+              let textContent = '';
+              li.childNodes.forEach(n => { if (n !== checkbox) textContent += n.textContent; });
+              if (!textContent.replace(/​/g, '').trim()) {
+                e.preventDefault();
+                const ul = li.parentNode;
+                li.remove();
+                if (ul && ul.children.length === 0) ul.remove();
+                return;
+              }
+            }
           }
         }
       }
