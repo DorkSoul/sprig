@@ -111,6 +111,29 @@ const Editor = (() => {
     bodyEl.addEventListener('mouseup', () => updateToolbarState(toolbarEl, bodyEl));
 
     bodyEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+          const node = sel.getRangeAt(0).commonAncestorContainer;
+          const li = (node.nodeType === Node.TEXT_NODE ? node.parentNode : node).closest('li');
+          if (li && li.querySelector('input[type="checkbox"]')) {
+            e.preventDefault();
+            const newLi = document.createElement('li');
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            const text = document.createTextNode('​');
+            newLi.appendChild(cb);
+            newLi.appendChild(text);
+            li.after(newLi);
+            const newRange = document.createRange();
+            newRange.setStart(text, text.length);
+            newRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+            return;
+          }
+        }
+      }
       handleLinkAutocomplete(e, bodyEl);
       handleTabKey(e);
     });

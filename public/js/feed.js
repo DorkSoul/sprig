@@ -77,7 +77,8 @@ const Feed = (() => {
   }
 
   function renderCard(note, opts = {}) {
-    const preview = note.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
+    const previewHtml = note.content.replace(/(\s*<(?:p|div|br)[^>]*>)?\s*(<span class="tag-inline">#[a-zA-Z0-9_-]+<\/span>\s*)+(<\/(?:p|div)>)?\s*$/gi, '');
+    const preview = previewHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
     const tags = renderTagChips(note.tags || []);
     const pinClass = note.pinned ? ' pinned' : '';
     const publicBadge = note.visibility === 'public' ? '<span class="public-badge">public</span>' : '';
