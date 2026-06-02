@@ -2,7 +2,7 @@
 
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
-const { getNotes, setNotes } = require('../lib/data');
+const { getNotes, setNotes, getUsers, getFolders } = require('../lib/data');
 const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -97,9 +97,13 @@ function stripHTML(html) {
 router.use(requireAuth);
 
 router.get('/', (req, res) => {
-  const notes = getNotes().filter(n =>
+  const user = getUsers().find(u => u.id === req.session.userId);
+  let notes = getNotes().filter(n =>
     n.userId === req.session.userId || n.visibility === 'public'
   );
+  if (user && !user.isAdmin && Array.isArray(user.folderAccess)) {
+    notes = notes.filter(n => user.folderAccess.includes(n.folderId));
+  }
   res.json(notes);
 });
 
@@ -131,10 +135,13 @@ router.get('/:id', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  const { title, content, tags, pinned, visibility } = req.body;
+  const { title, content, tags, pinned, visibility, folderId } = req.body;
+  const folders = getFolders();
+  const resolvedFolderId = (folderId && folders.find(f => f.id === folderId)) ? folderId : null;
   const note = {
     id: uuidv4(),
     userId: req.session.userId,
+    folderId: resolvedFolderId,
     title: typeof title === 'string' ? title.trim().slice(0, 200) : '',
     content: processTagsInContent(sanitizeHTML(content || '')),
     tags: Array.isArray(tags) ? tags.map(t => String(t).trim()).filter(Boolean) : [],
@@ -159,7 +166,7 @@ router.put('/:id', (req, res) => {
   if (idx === -1) return res.status(404).json({ error: 'Not found' });
   if (notes[idx].userId !== req.session.userId) return res.status(403).json({ error: 'Forbidden' });
 
-  const { title, content, tags, pinned, visibility } = req.body;
+  const { title, content, tags, pinned, visibility, folderId } = req.body;
   const note = notes[idx];
 
   if (title !== undefined) note.title = String(title).trim().slice(0, 200);
@@ -170,6 +177,10 @@ router.put('/:id', (req, res) => {
   if (Array.isArray(tags)) note.tags = tags.map(t => String(t).trim()).filter(Boolean);
   if (pinned !== undefined) note.pinned = pinned === true;
   if (visibility !== undefined) note.visibility = visibility === 'public' ? 'public' : 'private';
+  if ('folderId' in req.body) {
+    const folders = getFolders();
+    note.folderId = (folderId && folders.find(f => f.id === folderId)) ? folderId : null;
+  }
   note.updatedAt = new Date().toISOString();
 
   setNotes(notes);

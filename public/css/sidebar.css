@@ -49,6 +49,26 @@
   padding: 4px 12px 8px;
 }
 
+#folder-list {
+  list-style: none;
+}
+
+#folder-list li .folder-btn {
+  width: 100%;
+  text-align: left;
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.1s, color 0.1s;
+}
+
+#folder-list li .folder-btn:hover { background: var(--surface2); color: var(--text); }
+#folder-list li .folder-btn.active { color: var(--accent); }
+
 #tag-list {
   list-style: none;
 }

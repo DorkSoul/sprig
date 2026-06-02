@@ -3,6 +3,7 @@ import { formatDate, enc, apiFetch, extractTagsFromHTML, renderTagChips } from '
 const Feed = (() => {
   let _notes = [];
   let _activeTag = null;
+  let _activeFolder = null;
   let _currentView = 'feed';
 
   function setNotes(notes) { _notes = notes; }
@@ -130,6 +131,18 @@ const Feed = (() => {
     render(document.getElementById('note-feed'), _notes);
   }
 
+  function filterByFolder(folderId) {
+    _activeFolder = folderId;
+    _activeTag = null;
+    const filtered = _notes.filter(n => n.folderId === folderId);
+    render(document.getElementById('note-feed'), filtered);
+  }
+
+  function clearFolderFilter() {
+    _activeFolder = null;
+    render(document.getElementById('note-feed'), _notes);
+  }
+
   async function renderPublic() {
     const notes = await loadPublic();
     render(document.getElementById('public-feed'), notes, { readonly: true });
@@ -142,7 +155,7 @@ const Feed = (() => {
     render(document.getElementById('search-feed'), notes, { readonly: false });
   }
 
-  return { load, render, refresh, renderCard, filterByTag, clearTagFilter, renderPublic, renderSearch, setNotes, getNotes };
+  return { load, render, refresh, renderCard, filterByTag, clearTagFilter, filterByFolder, clearFolderFilter, renderPublic, renderSearch, setNotes, getNotes };
 })();
 
 export default Feed;

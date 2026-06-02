@@ -15,18 +15,43 @@ window._noteView = NoteView;
 window._sidebar = Sidebar;
 window._graph = Graph;
 window._admin = Admin;
+window._reloadFolders = () => Admin.loadFolders();
 
 Auth.init(async userData => {
+  window._currentUser = userData;
   UserMenu.init(userData);
 
   await Feed.load();
   Feed.render(document.getElementById('note-feed'), window._notes);
   Sidebar.renderTags();
+  await Sidebar.renderFolders(userData);
+  populateFolderSelects(userData);
 
   initInlineEditor();
   initSearch();
   initLayoutToggle();
 });
+
+window._populateFolderSelects = populateFolderSelects;
+function populateFolderSelects(userData) {
+  const folders = window._folders || [];
+  const allowed = (!userData || userData.isAdmin || !Array.isArray(userData.folderAccess))
+    ? folders
+    : folders.filter(f => userData.folderAccess.includes(f.id));
+
+  const selects = ['editor-folder', 'edit-folder'];
+  selects.forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const current = sel.value;
+    const noFolderOpt = (userData && !userData.isAdmin && Array.isArray(userData.folderAccess) && userData.folderAccess.length > 0)
+      ? '' : '<option value="">No folder</option>';
+    sel.innerHTML = noFolderOpt + allowed.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+    if (current) sel.value = current;
+    if (allowed.length > 0) sel.classList.remove('hidden');
+    else sel.classList.add('hidden');
+  });
+}
 
 function initInlineEditor() {
   const toolbarEl = document.getElementById('editor-toolbar');
@@ -52,12 +77,14 @@ function initInlineEditor() {
     if (!content.trim() && !titleEl.value.trim()) return;
 
     const tags = extractTagsFromHTML(content);
+    const folderEl = document.getElementById('editor-folder');
     const res = await apiFetch('/api/notes', {
       method: 'POST',
       body: {
         title: titleEl.value.trim(),
         content,
         tags,
+        folderId: folderEl?.value || null,
         visibility: publicEl.checked ? 'public' : 'private',
       },
     });

@@ -180,6 +180,12 @@ const NoteView = (() => {
     bodyEl.innerHTML = note.content;
     publicEl.checked = note.visibility === 'public';
 
+    const folderEl = document.getElementById('edit-folder');
+    if (folderEl) {
+      window._populateFolderSelects?.(window._currentUser);
+      folderEl.value = note.folderId || '';
+    }
+
     const tags = extractTagsFromHTML(note.content);
     tagsPreview.innerHTML = renderTagChips(tags);
 
@@ -195,10 +201,12 @@ const NoteView = (() => {
     document.getElementById('edit-save-btn').onclick = async () => {
       const content = window._editor?.getContent(bodyEl) || bodyEl.innerHTML;
       const inlineTags = extractTagsFromHTML(content);
+      const folderEl = document.getElementById('edit-folder');
       const body = {
         title: titleEl.value.trim(),
         content,
         tags: inlineTags,
+        folderId: folderEl?.value || null,
         visibility: publicEl.checked ? 'public' : 'private',
       };
       const res = await apiFetch(`/api/notes/${id}`, { method: 'PUT', body });
