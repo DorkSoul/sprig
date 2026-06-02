@@ -75,10 +75,6 @@
           <button class="nav-item" data-view="public">Public</button>
           <button class="nav-item" data-view="graph">Graph</button>
         </nav>
-        <div class="sidebar-section" id="folders-section">
-          <div class="sidebar-section-title">Folders</div>
-          <ul id="folder-list"></ul>
-        </div>
         <div class="sidebar-section">
           <div class="sidebar-section-title">Tags</div>
           <ul id="tag-list"></ul>
@@ -95,7 +91,6 @@
             <div class="editor-sticky-header">
             <div class="editor-actions editor-topbar">
               <input type="text" id="editor-title" placeholder="Title (optional)">
-              <select id="editor-folder" class="folder-select hidden"><option value="">No folder</option></select>
               <label class="visibility-toggle">
                 <input type="checkbox" id="editor-public"> Public
               </label>
@@ -185,7 +180,6 @@
         </div>
         <div id="edit-editor-toolbar" class="editor-toolbar-clone"></div>
         <input type="text" id="edit-title" placeholder="Title (optional)" class="edit-title-input">
-        <select id="edit-folder" class="folder-select hidden"><option value="">No folder</option></select>
         <div id="edit-editor-body" contenteditable="true" data-placeholder="Note content..."></div>
         <div id="edit-tags-preview" class="editor-tags-preview"></div>
         <div class="modal-footer">
@@ -208,26 +202,9 @@
           <div class="admin-section">
             <h3>Users</h3>
             <table id="admin-users-table">
-              <thead><tr><th>Username</th><th>Admin</th><th>Folders</th><th>Created</th><th></th></tr></thead>
+              <thead><tr><th>Username</th><th>Admin</th><th>Created</th><th></th></tr></thead>
               <tbody id="admin-users-tbody"></tbody>
             </table>
-          </div>
-          <div class="admin-section">
-            <h3>Folders</h3>
-            <form id="admin-create-folder-form">
-              <input type="text" id="new-folder-name" placeholder="Folder name">
-              <button type="submit">Add folder</button>
-              <p class="auth-error hidden" id="admin-folder-error"></p>
-            </form>
-            <ul id="admin-folder-list"></ul>
-          </div>
-          <div id="admin-folder-access-panel" class="admin-section hidden">
-            <h3>Folder access — <span id="folder-access-username"></span></h3>
-            <label class="folder-all-label">
-              <input type="checkbox" id="folder-access-all"> All folders (no restriction)
-            </label>
-            <div id="folder-access-list"></div>
-            <button id="folder-access-save-btn">Save</button>
           </div>
           <div class="admin-section">
             <h3>Create user</h3>
@@ -242,13 +219,6 @@
                 <button type="button" class="pw-eye" data-target="new-user-password-confirm" tabindex="-1">&#128065;</button>
               </div>
               <label><input type="checkbox" id="new-user-admin"> Admin</label>
-              <div class="new-user-folders">
-                <div class="new-user-folders-title">Folder access</div>
-                <label class="folder-access-item">
-                  <input type="checkbox" id="new-user-folder-all" checked> All folders (no restriction)
-                </label>
-                <div id="new-user-folder-list"></div>
-              </div>
               <button type="submit">Create</button>
               <p class="auth-error hidden" id="admin-user-error"></p>
             </form>

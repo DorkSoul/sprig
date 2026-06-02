@@ -1,8 +1,7 @@
-import { apiFetch, enc } from './utils.js';
+import { apiFetch } from './utils.js';
 
 const Sidebar = (() => {
   let _activeTag = null;
-  let _activeFolder = null;
 
   async function renderTags() {
     const res = await apiFetch('/api/tags');
@@ -36,50 +35,8 @@ const Sidebar = (() => {
     });
   }
 
-  async function renderFolders(currentUser) {
-    const section = document.getElementById('folders-section');
-    const list = document.getElementById('folder-list');
-    const res = await apiFetch('/api/folders');
-    if (!res) { section.classList.add('hidden'); return; }
-    const folders = await res.json();
-    window._folders = folders;
-
-    const allowed = (!currentUser || currentUser.isAdmin || !Array.isArray(currentUser.folderAccess))
-      ? folders
-      : folders.filter(f => currentUser.folderAccess.includes(f.id));
-
-    if (allowed.length === 0) { section.classList.add('hidden'); return; }
-    section.classList.remove('hidden');
-
-    list.innerHTML = allowed.map(f => `
-      <li>
-        <button class="folder-btn${_activeFolder === f.id ? ' active' : ''}" data-id="${f.id}">
-          <span>&#128193; ${enc(f.name)}</span>
-        </button>
-      </li>`).join('');
-
-    list.querySelectorAll('.folder-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.dataset.id;
-        if (_activeFolder === id) {
-          _activeFolder = null;
-          window._feed?.clearFolderFilter();
-        } else {
-          _activeFolder = id;
-          window._feed?.filterByFolder(id);
-        }
-        renderFolders(currentUser);
-        showView('feed');
-      });
-    });
-  }
-
   function clearActiveTag() {
     _activeTag = null;
-  }
-
-  function clearActiveFolder() {
-    _activeFolder = null;
   }
 
   function showView(view) {
@@ -100,9 +57,7 @@ const Sidebar = (() => {
       if (view === 'graph') window._graph?.render();
       if (view === 'feed') {
         _activeTag = null;
-        _activeFolder = null;
         window._feed?.clearTagFilter();
-        window._feed?.clearFolderFilter();
       }
     });
   });
@@ -111,7 +66,7 @@ const Sidebar = (() => {
     document.getElementById('sidebar').classList.toggle('collapsed');
   });
 
-  return { renderTags, renderFolders, clearActiveTag, clearActiveFolder, showView };
+  return { renderTags, clearActiveTag, showView };
 })();
 
 export default Sidebar;

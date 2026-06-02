@@ -26,13 +26,11 @@ router.post('/users', (req, res) => {
   }
 
   const hash = bcrypt.hashSync(password, 12);
-  const { folderAccess } = req.body;
   const user = {
     id: uuidv4(),
     username,
     passwordHash: hash,
     isAdmin: isAdmin === true,
-    folderAccess: Array.isArray(folderAccess) ? folderAccess : null,
     createdAt: new Date().toISOString(),
   };
   users.push(user);
@@ -64,9 +62,6 @@ router.put('/users/:id', (req, res) => {
       return res.status(400).json({ error: 'Cannot remove the last admin' });
     }
     users[idx].isAdmin = isAdmin === true;
-  }
-  if ('folderAccess' in req.body) {
-    users[idx].folderAccess = Array.isArray(req.body.folderAccess) ? req.body.folderAccess : null;
   }
 
   setUsers(users);
