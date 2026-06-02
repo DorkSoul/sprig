@@ -17,7 +17,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use(session({
   store: new FileStore({ path: SESSIONS_DIR, ttl: 86400 * 30, reapInterval: 3600 }),
   secret: getSessionSecret(),
-  resave: false,
+  resave: true,
+  rolling: true,
   saveUninitialized: false,
   cookie: { httpOnly: true, sameSite: 'lax', maxAge: 1000 * 86400 * 30 },
 }));
