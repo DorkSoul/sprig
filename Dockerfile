@@ -12,4 +12,4 @@ COPY middleware/ middleware/
 COPY routes/ routes/
 COPY public/ public/
 EXPOSE 7341
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "mkdir -p /app/data/sessions && node server.js"]
