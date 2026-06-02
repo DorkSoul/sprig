@@ -258,97 +258,192 @@ const Editor = (() => {
     sel.addRange(newRange);
   }
 
+  function getSelectedBlocks(range, bodyEl) {
+    if (range.collapsed) {
+      const b = closestBlock(range.commonAncestorContainer, bodyEl);
+      return b ? [b] : [];
+    }
+    const leafTags = new Set(['p','h1','h2','h3','li','blockquote','pre']);
+    const result = [];
+    const walker = document.createTreeWalker(bodyEl, NodeFilter.SHOW_ELEMENT);
+    let node;
+    while ((node = walker.nextNode())) {
+      if (!leafTags.has(node.tagName.toLowerCase())) continue;
+      if (!range.intersectsNode(node)) continue;
+      const hasBlockChild = [...node.children].some(c => leafTags.has(c.tagName?.toLowerCase()));
+      if (hasBlockChild) continue;
+      result.push(node);
+    }
+    if (result.length === 0) {
+      const b = closestBlock(range.commonAncestorContainer, bodyEl);
+      if (b) result.push(b);
+    }
+    return result;
+  }
+
   function toggleBlock(tag, bodyEl, sel) {
     const range = sel.getRangeAt(0);
-    const block = closestBlock(range.commonAncestorContainer, bodyEl);
-    if (!block) return;
+    const blocks = getSelectedBlocks(range, bodyEl);
+    if (!blocks.length) return;
 
-    const newEl = document.createElement(block.tagName.toLowerCase() === tag ? 'p' : tag);
-    newEl.innerHTML = block.innerHTML;
-    block.replaceWith(newEl);
+    const allMatch = blocks.every(b => b.tagName.toLowerCase() === tag);
+    const targetTag = allMatch ? 'p' : tag;
+    let lastEl;
 
-    const newRange = document.createRange();
-    newRange.selectNodeContents(newEl);
-    newRange.collapse(false);
-    sel.removeAllRanges();
-    sel.addRange(newRange);
+    for (const block of blocks) {
+      const newEl = document.createElement(targetTag);
+      if (block.tagName.toLowerCase() === 'li') {
+        const clone = block.cloneNode(true);
+        clone.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.remove());
+        newEl.innerHTML = clone.innerHTML.trim() || '<br>';
+        const list = block.closest('ul, ol');
+        block.before(newEl);
+        block.remove();
+        if (list && list.children.length === 0) list.remove();
+      } else {
+        newEl.innerHTML = block.innerHTML;
+        block.replaceWith(newEl);
+      }
+      lastEl = newEl;
+    }
+
+    if (lastEl) {
+      const newRange = document.createRange();
+      newRange.selectNodeContents(lastEl);
+      newRange.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+    }
   }
 
   function toggleList(listTag, bodyEl, sel) {
     const range = sel.getRangeAt(0);
-    const block = closestBlock(range.commonAncestorContainer, bodyEl);
-    if (!block) return;
+    const blocks = getSelectedBlocks(range, bodyEl);
+    if (!blocks.length) return;
 
-    const parentList = block.closest('ul, ol');
-    let restoreTarget;
+    const allInTargetList = blocks.every(b => {
+      if (b.tagName.toLowerCase() !== 'li') return false;
+      const list = b.closest('ul, ol');
+      return list && list.tagName.toLowerCase() === listTag;
+    });
 
-    if (parentList) {
-      if (parentList.tagName.toLowerCase() === listTag) {
-        // Toggle off — unwrap back to paragraph
+    let lastEl;
+
+    if (allInTargetList) {
+      for (const block of blocks) {
         const p = document.createElement('p');
         p.innerHTML = block.innerHTML;
-        parentList.replaceWith(p);
-        restoreTarget = p;
-      } else {
-        // Switch list type in place (ul ↔ ol) without nesting
-        const newList = document.createElement(listTag);
-        newList.innerHTML = parentList.innerHTML;
-        parentList.replaceWith(newList);
-        restoreTarget = newList.querySelector('li') || newList;
+        const list = block.closest('ul, ol');
+        block.before(p);
+        block.remove();
+        if (list && list.children.length === 0) list.remove();
+        lastEl = p;
       }
     } else {
-      const list = document.createElement(listTag);
-      const li = document.createElement('li');
-      li.innerHTML = block.innerHTML;
-      list.appendChild(li);
-      block.replaceWith(list);
-      restoreTarget = li;
+      const newList = document.createElement(listTag);
+      for (const block of blocks) {
+        const li = document.createElement('li');
+        li.innerHTML = block.innerHTML;
+        newList.appendChild(li);
+        lastEl = li;
+      }
+      const firstBlock = blocks[0];
+      if (firstBlock.tagName.toLowerCase() === 'li') {
+        firstBlock.closest('ul, ol').before(newList);
+      } else {
+        firstBlock.before(newList);
+      }
+      for (const block of blocks) {
+        if (block.tagName.toLowerCase() === 'li') {
+          const list = block.closest('ul, ol');
+          block.remove();
+          if (list && list.children.length === 0) list.remove();
+        } else {
+          block.remove();
+        }
+      }
     }
 
-    const newRange = document.createRange();
-    newRange.selectNodeContents(restoreTarget);
-    newRange.collapse(false);
-    sel.removeAllRanges();
-    sel.addRange(newRange);
+    if (lastEl) {
+      const newRange = document.createRange();
+      newRange.selectNodeContents(lastEl);
+      newRange.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+    }
   }
 
   function insertChecklist(bodyEl, sel) {
     const range = sel.getRangeAt(0);
-    const block = closestBlock(range.commonAncestorContainer, bodyEl);
-    const parentLi = block?.closest('li');
+    const blocks = getSelectedBlocks(range, bodyEl);
+    if (!blocks.length) return;
 
-    if (parentLi?.querySelector('input[type="checkbox"]')) {
-      const p = document.createElement('p');
-      p.textContent = parentLi.textContent.replace(/^\s*/, '');
-      (parentLi.closest('ul, ol') || parentLi).replaceWith(p);
-      const newRange = document.createRange();
-      newRange.selectNodeContents(p);
-      newRange.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(newRange);
+    const allCheckbox = blocks.every(b =>
+      b.tagName.toLowerCase() === 'li' && b.querySelector('input[type="checkbox"]')
+    );
+
+    if (allCheckbox) {
+      let lastEl;
+      for (const block of blocks) {
+        const p = document.createElement('p');
+        const clone = block.cloneNode(true);
+        clone.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.remove());
+        p.textContent = clone.textContent.replace(/^\s*/, '');
+        const list = block.closest('ul, ol');
+        block.before(p);
+        block.remove();
+        if (list && list.children.length === 0) list.remove();
+        lastEl = p;
+      }
+      if (lastEl) {
+        const newRange = document.createRange();
+        newRange.selectNodeContents(lastEl);
+        newRange.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+      }
       return;
     }
 
-    const list = document.createElement('ul');
-    const li = document.createElement('li');
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    const text = document.createTextNode(' ' + (block ? block.textContent : ''));
-    li.appendChild(cb);
-    li.appendChild(text);
-    list.appendChild(li);
-
-    if (block) {
-      block.replaceWith(list);
-    } else {
-      range.insertNode(list);
+    const newList = document.createElement('ul');
+    let lastText;
+    for (const block of blocks) {
+      const li = document.createElement('li');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      const raw = block.tagName.toLowerCase() === 'li'
+        ? block.textContent.replace(/^\s*/, '')
+        : block.textContent.trim();
+      const text = document.createTextNode(' ' + raw);
+      li.appendChild(cb);
+      li.appendChild(text);
+      newList.appendChild(li);
+      lastText = text;
     }
 
-    const newRange = document.createRange();
-    newRange.setStart(text, 1);
-    newRange.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(newRange);
+    const firstBlock = blocks[0];
+    if (firstBlock.tagName.toLowerCase() === 'li') {
+      firstBlock.closest('ul, ol').before(newList);
+    } else {
+      firstBlock.before(newList);
+    }
+    for (const block of blocks) {
+      if (block.tagName.toLowerCase() === 'li') {
+        const list = block.closest('ul, ol');
+        block.remove();
+        if (list && list.children.length === 0) list.remove();
+      } else {
+        block.remove();
+      }
+    }
+
+    if (lastText) {
+      const newRange = document.createRange();
+      newRange.setStart(lastText, lastText.length);
+      newRange.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+    }
   }
 
   function insertCodeBlock(bodyEl, sel) {
