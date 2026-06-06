@@ -47,6 +47,8 @@ const NoteView = (() => {
     });
 
     loadBacklinks(id);
+    document.getElementById('table-toolbar')?.classList.add('hidden');
+    window.getSelection()?.removeAllRanges();
     document.getElementById('note-modal').classList.remove('hidden');
   }
 
@@ -192,6 +194,7 @@ const NoteView = (() => {
 
   function closeModal() {
     document.getElementById('note-modal').classList.add('hidden');
+    document.getElementById('table-toolbar')?.classList.add('hidden');
   }
 
   function exportNote(note, format) {
@@ -273,6 +276,7 @@ const NoteView = (() => {
 
   function closeEditModal() {
     document.getElementById('edit-modal').classList.add('hidden');
+    document.getElementById('table-toolbar')?.classList.add('hidden');
     window._editor?.hideLinkAutocomplete();
   }
 
@@ -305,6 +309,9 @@ const NoteView = (() => {
     const btn = document.getElementById('edit-due-btn');
     const clear = document.getElementById('edit-due-clear');
     if (!input || !btn || !clear) return;
+    btn.addEventListener('click', () => {
+      try { input.showPicker(); } catch { input.focus(); }
+    });
     input.addEventListener('change', () => syncDueDateDisplay('edit-due-date', 'edit-due-btn', 'edit-due-clear'));
     clear.addEventListener('click', e => {
       e.stopPropagation();

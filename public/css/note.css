@@ -43,22 +43,26 @@
 .note-card-preview input[type="checkbox"] { pointer-events: none; }
 
 .preview-resize-handle {
-  height: 10px;
+  height: 14px;
   cursor: ns-resize;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 0 6px;
-  margin-top: 2px;
+  position: relative;
+  margin-top: -14px;
+  z-index: 2;
+  pointer-events: auto;
   opacity: 0;
   transition: opacity 0.15s;
 }
 .note-card:hover .preview-resize-handle { opacity: 1; }
 .preview-resize-handle::after {
-  content: '⣿';
-  font-size: 8px;
-  color: var(--text-muted);
-  letter-spacing: -1px;
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0 14px 14px;
+  border-color: transparent transparent var(--accent) transparent;
 }
 
 .note-card-preview a.note-link { color: var(--accent); }
@@ -178,14 +182,14 @@
   justify-content: center;
   width: 16px;
   height: 16px;
-  margin-right: 6px;
+  margin-right: 4px;
   font-size: 10px;
-  color: var(--text-muted);
+  color: var(--accent);
   background: none;
   border: none;
   border-radius: 3px;
   cursor: pointer;
-  opacity: 0.4;
+  opacity: 0.7;
   transition: opacity 0.15s, background 0.15s;
   vertical-align: middle;
   padding: 0;

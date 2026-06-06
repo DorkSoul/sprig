@@ -112,6 +112,10 @@ function initDueDatePicker(inputId, btnId, clearId) {
   const clear = document.getElementById(clearId);
   if (!input || !btn || !clear) return;
 
+  btn.addEventListener('click', () => {
+    try { input.showPicker(); } catch { input.focus(); }
+  });
+
   input.addEventListener('change', () => syncDueDateDisplay(inputId, btnId, clearId));
 
   clear.addEventListener('click', e => {
@@ -136,12 +140,26 @@ function initPreviewResize() {
     e.preventDefault();
     const startY = e.clientY;
     const startH = previewHeight;
+    let scrollInterval = null;
 
     const onMove = ev => {
       previewHeight = Math.max(60, Math.min(1200, startH + (ev.clientY - startY)));
       applyHeight();
+
+      const distFromBottom = window.innerHeight - ev.clientY;
+      if (distFromBottom < 60) {
+        if (!scrollInterval) {
+          scrollInterval = setInterval(() => {
+            const mainContent = document.getElementById('main-content');
+            if (mainContent) mainContent.scrollTop += 8;
+          }, 16);
+        }
+      } else {
+        if (scrollInterval) { clearInterval(scrollInterval); scrollInterval = null; }
+      }
     };
     const onUp = () => {
+      if (scrollInterval) { clearInterval(scrollInterval); scrollInterval = null; }
       localStorage.setItem(KEY, previewHeight);
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);

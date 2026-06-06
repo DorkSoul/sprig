@@ -54,12 +54,13 @@ select option { background: var(--surface2); color: var(--text); }
 .due-date-clear:hover { color: var(--danger); border-color: var(--danger); }
 .due-date-native {
   position: absolute;
-  left: 0;
-  top: 0;
-  width: calc(100% - 26px);
-  height: 100%;
+  width: 0;
+  height: 0;
   opacity: 0;
-  cursor: pointer;
+  pointer-events: none;
+  border: none;
+  padding: 0;
+  margin: 0;
 }
 
 /* ── Feed controls ───────────────────────────────────────────────── */
@@ -136,13 +137,25 @@ select option { background: var(--surface2); color: var(--text); }
   font-weight: 600;
 }
 
+#editor-body,
+#edit-editor-body {
+  overflow-x: hidden;
+}
+
+#editor-body table,
+#edit-editor-body table {
+  table-layout: fixed;
+  width: 100%;
+  word-break: break-word;
+}
+
 #editor-body table th,
 #editor-body table td,
 #edit-editor-body table th,
 #edit-editor-body table td {
   border: 1px solid var(--border, #333);
   padding: 6px 10px;
-  min-width: 60px;
+  min-width: 40px;
 }
 
 #editor-body table th,

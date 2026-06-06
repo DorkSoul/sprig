@@ -94,6 +94,7 @@ input:not([type="checkbox"]):focus, textarea:focus {
 .danger-btn {
   background: var(--danger) !important;
   color: #fff !important;
+  border-radius: var(--radius) !important;
 }
 
 .danger-btn:hover { background: #c04040 !important; }

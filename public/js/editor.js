@@ -316,7 +316,11 @@ const Editor = (() => {
   function getSelectedBlocks(range, bodyEl) {
     if (range.collapsed) {
       if (inTableCell(range.commonAncestorContainer)) return [];
-      const b = closestBlock(range.commonAncestorContainer, bodyEl);
+      const anchor = range.commonAncestorContainer;
+      // If cursor is directly in a ul/ol (not inside a li), don't format
+      const directList = (anchor.nodeType === Node.ELEMENT_NODE ? anchor : anchor.parentNode)?.closest?.('ul, ol');
+      if (directList && !anchor.closest?.('li')) return [];
+      const b = closestBlock(anchor, bodyEl);
       return b ? [b] : [];
     }
     const leafTags = new Set(['p','h1','h2','h3','li','blockquote','pre']);
@@ -388,7 +392,7 @@ const Editor = (() => {
     if (allInTargetList) {
       for (const block of blocks) {
         const p = document.createElement('p');
-        p.innerHTML = block.innerHTML;
+        p.innerHTML = block.innerHTML.trim() || '<br>';
         const list = block.closest('ul, ol');
         block.before(p);
         block.remove();
@@ -879,6 +883,8 @@ const Editor = (() => {
     const node = sel.focusNode;
     const cell = (node?.nodeType === Node.TEXT_NODE ? node.parentNode : node)?.closest('td, th');
     if (!cell) { toolbar.classList.add('hidden'); return; }
+    const editorBody = cell.closest('#editor-body, #edit-editor-body');
+    if (!editorBody) { toolbar.classList.add('hidden'); return; }
     const table = cell.closest('table');
     const rect = table.getBoundingClientRect();
     toolbar.classList.remove('hidden');
@@ -1061,12 +1067,6 @@ const Editor = (() => {
     while (n && n !== container) {
       if (blocks.has(n.tagName?.toLowerCase())) return n;
       n = n.parentNode;
-    }
-    if (n === container) {
-      const p = document.createElement('p');
-      p.innerHTML = '<br>';
-      container.appendChild(p);
-      return p;
     }
     return null;
   }
