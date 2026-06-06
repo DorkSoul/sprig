@@ -31,6 +31,9 @@ app.use('/api/notes', require('./routes/notes'));
 app.use('/api/tags', require('./routes/tags'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/attachments', require('./routes/attachments'));
+app.use('/api/folders', require('./routes/folders'));
+app.use('/api/searches', require('./routes/searches'));
+app.use('/api/templates', require('./routes/templates'));
 
 app.get('*', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

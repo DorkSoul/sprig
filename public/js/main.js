@@ -6,6 +6,10 @@ import Sidebar from './sidebar.js';
 import Graph from './graph.js';
 import UserMenu from './user-menu.js';
 import Admin from './admin.js';
+import Folders from './folders.js';
+import Searches from './searches.js';
+import Calendar from './calendar.js';
+import Templates from './templates.js';
 import { apiFetch, extractTagsFromHTML } from './utils.js';
 
 window._auth = Auth;
@@ -16,6 +20,8 @@ window._sidebar = Sidebar;
 window._graph = Graph;
 window._admin = Admin;
 
+Calendar.init();
+
 Auth.init(async userData => {
   UserMenu.init(userData);
 
@@ -23,9 +29,20 @@ Auth.init(async userData => {
   Feed.render(document.getElementById('note-feed'), window._notes);
   Sidebar.renderTags();
 
+  await Folders.loadAndRender();
+  await Searches.loadAndRender();
+  await Templates.loadAndRender();
+
   initInlineEditor();
   initSearch();
   initLayoutToggle();
+  initSort();
+  initSaveSearch();
+  initTemplatesModal();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
 });
 
 function initInlineEditor() {
@@ -35,6 +52,8 @@ function initInlineEditor() {
   const titleEl = document.getElementById('editor-title');
   const saveBtn = document.getElementById('editor-save-btn');
   const publicEl = document.getElementById('editor-public');
+  const folderEl = document.getElementById('editor-folder');
+  const dueDateEl = document.getElementById('editor-due-date');
 
   Editor.initToolbar(toolbarEl, bodyEl, tagsPreview);
   Editor.initImport(bodyEl, tagsPreview);
@@ -59,6 +78,8 @@ function initInlineEditor() {
         content,
         tags,
         visibility: publicEl.checked ? 'public' : 'private',
+        folderId: folderEl?.value || null,
+        dueDate: dueDateEl?.value || null,
       },
     });
 
@@ -68,6 +89,8 @@ function initInlineEditor() {
       tagsPreview.innerHTML = '';
       titleEl.value = '';
       publicEl.checked = false;
+      if (folderEl) folderEl.value = '';
+      if (dueDateEl) dueDateEl.value = '';
       await Feed.refresh();
     }
   });
@@ -124,6 +147,57 @@ function initSearch() {
     if (e.key === 'Escape') {
       input.value = '';
       Sidebar.showView('feed');
+    }
+  });
+}
+
+function initSort() {
+  const sel = document.getElementById('feed-sort');
+  if (!sel) return;
+  const KEY = 'sprig_sort';
+  const saved = localStorage.getItem(KEY);
+  if (saved) { sel.value = saved; Feed.setSort(saved); }
+
+  sel.addEventListener('change', () => {
+    Feed.setSort(sel.value);
+    localStorage.setItem(KEY, sel.value);
+    Feed.refresh();
+  });
+}
+
+function initSaveSearch() {
+  const btn = document.getElementById('save-search-btn');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const q = document.getElementById('search-input')?.value.trim() || '';
+    const name = prompt('Save search as:');
+    if (name && name.trim()) Searches.saveSearch(name.trim(), q, []);
+  });
+}
+
+function initTemplatesModal() {
+  const openBtn = document.getElementById('editor-template-btn');
+  const modal = document.getElementById('templates-modal');
+  const closeBtn = document.getElementById('templates-modal-close');
+  const saveBtn = document.getElementById('save-as-template-btn');
+
+  if (!modal) return;
+
+  openBtn?.addEventListener('click', async () => {
+    await Templates.loadAndRender();
+    modal.classList.remove('hidden');
+  });
+
+  closeBtn?.addEventListener('click', () => modal.classList.add('hidden'));
+
+  modal.addEventListener('click', e => {
+    if (e.target === modal) modal.classList.add('hidden');
+  });
+
+  saveBtn?.addEventListener('click', async () => {
+    const name = prompt('Template name:');
+    if (name && name.trim()) {
+      await Templates.saveFromEditor(name.trim());
     }
   });
 }

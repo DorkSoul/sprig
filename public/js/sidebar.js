@@ -40,9 +40,13 @@ const Sidebar = (() => {
   }
 
   function showView(view) {
-    const views = ['feed-view', 'public-view', 'graph-view', 'search-view'];
-    views.forEach(v => document.getElementById(v).classList.add('hidden'));
-    document.getElementById(`${view}-view`).classList.remove('hidden');
+    const views = ['feed-view', 'public-view', 'graph-view', 'search-view', 'calendar-view'];
+    views.forEach(v => {
+      const el = document.getElementById(v);
+      if (el) el.classList.add('hidden');
+    });
+    const target = document.getElementById(`${view}-view`);
+    if (target) target.classList.remove('hidden');
 
     document.querySelectorAll('.nav-item').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.view === view);
@@ -55,6 +59,7 @@ const Sidebar = (() => {
       showView(view);
       if (view === 'public') window._feed?.renderPublic();
       if (view === 'graph') window._graph?.render();
+      if (view === 'calendar') window._calendar?.render();
       if (view === 'feed') {
         _activeTag = null;
         window._feed?.clearTagFilter();

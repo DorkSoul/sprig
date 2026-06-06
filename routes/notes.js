@@ -2,7 +2,7 @@
 
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
-const { getNotes, setNotes } = require('../lib/data');
+const { getNotes, setNotes, getVersions, setVersions } = require('../lib/data');
 const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -10,6 +10,7 @@ const router = express.Router();
 const ALLOWED_TAGS = new Set([
   'p','br','strong','em','u','s','h1','h2','h3',
   'ul','ol','li','blockquote','code','pre','a','hr','span','img','input',
+  'table','thead','tbody','tr','th','td',
 ]);
 
 const ALLOWED_ATTRS = {
@@ -97,9 +98,13 @@ function stripHTML(html) {
 router.use(requireAuth);
 
 router.get('/', (req, res) => {
-  const notes = getNotes().filter(n =>
+  let notes = getNotes().filter(n =>
     n.userId === req.session.userId || n.visibility === 'public'
   );
+  if (req.query.folderId) {
+    const fid = req.query.folderId;
+    notes = notes.filter(n => n.folderId === fid);
+  }
   res.json(notes);
 });
 
@@ -131,7 +136,7 @@ router.get('/:id', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  const { title, content, tags, pinned, visibility } = req.body;
+  const { title, content, tags, pinned, visibility, folderId, dueDate } = req.body;
   const note = {
     id: uuidv4(),
     userId: req.session.userId,
@@ -141,6 +146,8 @@ router.post('/', (req, res) => {
     links: [],
     pinned: pinned === true,
     visibility: visibility === 'public' ? 'public' : 'private',
+    folderId: typeof folderId === 'string' ? folderId : null,
+    dueDate: (typeof dueDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dueDate)) ? dueDate : null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -159,8 +166,23 @@ router.put('/:id', (req, res) => {
   if (idx === -1) return res.status(404).json({ error: 'Not found' });
   if (notes[idx].userId !== req.session.userId) return res.status(403).json({ error: 'Forbidden' });
 
-  const { title, content, tags, pinned, visibility } = req.body;
+  const { title, content, tags, pinned, visibility, folderId, dueDate } = req.body;
   const note = notes[idx];
+
+  if (content !== undefined && content !== note.content) {
+    const versions = getVersions();
+    versions.unshift({
+      id: uuidv4(),
+      noteId: note.id,
+      userId: note.userId,
+      title: note.title,
+      content: note.content,
+      savedAt: new Date().toISOString(),
+    });
+    const noteVersions = versions.filter(v => v.noteId === note.id).slice(0, 20);
+    const otherVersions = versions.filter(v => v.noteId !== note.id);
+    setVersions([...noteVersions, ...otherVersions]);
+  }
 
   if (title !== undefined) note.title = String(title).trim().slice(0, 200);
   if (content !== undefined) {
@@ -170,8 +192,54 @@ router.put('/:id', (req, res) => {
   if (Array.isArray(tags)) note.tags = tags.map(t => String(t).trim()).filter(Boolean);
   if (pinned !== undefined) note.pinned = pinned === true;
   if (visibility !== undefined) note.visibility = visibility === 'public' ? 'public' : 'private';
+  if (folderId !== undefined) note.folderId = typeof folderId === 'string' && folderId ? folderId : null;
+  if (dueDate !== undefined) {
+    note.dueDate = (typeof dueDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dueDate)) ? dueDate : null;
+  }
   note.updatedAt = new Date().toISOString();
 
+  setNotes(notes);
+  res.json(note);
+});
+
+router.get('/:id/versions', requireAuth, (req, res) => {
+  const notes = getNotes();
+  const note = notes.find(n => n.id === req.params.id);
+  if (!note) return res.status(404).json({ error: 'Not found' });
+  if (note.userId !== req.session.userId) return res.status(403).json({ error: 'Forbidden' });
+  const versions = getVersions()
+    .filter(v => v.noteId === req.params.id)
+    .sort((a, b) => b.savedAt.localeCompare(a.savedAt));
+  res.json(versions);
+});
+
+router.post('/:id/versions/:vid/restore', requireAuth, (req, res) => {
+  const notes = getNotes();
+  const idx = notes.findIndex(n => n.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Not found' });
+  if (notes[idx].userId !== req.session.userId) return res.status(403).json({ error: 'Forbidden' });
+
+  const version = getVersions().find(v => v.id === req.params.vid && v.noteId === req.params.id);
+  if (!version) return res.status(404).json({ error: 'Version not found' });
+
+  const note = notes[idx];
+  const versions = getVersions();
+  versions.unshift({
+    id: uuidv4(),
+    noteId: note.id,
+    userId: note.userId,
+    title: note.title,
+    content: note.content,
+    savedAt: new Date().toISOString(),
+  });
+  const noteVersions = versions.filter(v => v.noteId === note.id).slice(0, 20);
+  const otherVersions = versions.filter(v => v.noteId !== note.id);
+  setVersions([...noteVersions, ...otherVersions]);
+
+  note.title = version.title;
+  note.content = version.content;
+  note.links = extractLinks(note.content);
+  note.updatedAt = new Date().toISOString();
   setNotes(notes);
   res.json(note);
 });

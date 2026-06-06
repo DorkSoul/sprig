@@ -8,12 +8,26 @@ const NoteView = (() => {
     document.getElementById('modal-title').textContent = note.title || '';
     document.getElementById('modal-content').innerHTML = note.content;
     document.getElementById('modal-tags').innerHTML = renderTagChips(note.tags || []);
-    document.getElementById('modal-meta').textContent =
-      `Created ${formatDate(note.createdAt)}  ·  Updated ${formatDate(note.updatedAt)}`;
+
+    const words = note.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().split(' ').filter(Boolean).length;
+    const mins = Math.max(1, Math.ceil(words / 200));
+    let metaText = `Created ${formatDate(note.createdAt)}  ·  Updated ${formatDate(note.updatedAt)}  ·  ${words} words  ·  ${mins} min read`;
+    if (note.dueDate) {
+      const [y, m, d] = note.dueDate.split('-');
+      const formatted = new Date(Number(y), Number(m) - 1, Number(d))
+        .toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      metaText += `  ·  Due ${formatted}`;
+    }
+    document.getElementById('modal-meta').textContent = metaText;
+
+    document.querySelectorAll('#modal-content pre code').forEach(el => {
+      if (window.hljs) hljs.highlightElement(el);
+    });
 
     document.getElementById('modal-edit-btn').onclick = () => { closeModal(); openEdit(id); };
     document.getElementById('modal-export-html-btn').onclick = () => exportNote(note, 'html');
     document.getElementById('modal-export-text-btn').onclick = () => exportNote(note, 'text');
+    document.getElementById('modal-history-btn').onclick = () => openHistory(id);
     document.getElementById('modal-delete-btn').onclick = async () => {
       if (!confirm('Delete this note?')) return;
       const res = await apiFetch(`/api/notes/${id}`, { method: 'DELETE' });
@@ -114,6 +128,68 @@ const NoteView = (() => {
     }
   }
 
+  async function openHistory(id) {
+    const res = await apiFetch(`/api/notes/${id}/versions`);
+    if (!res) return;
+    const versions = await res.json();
+
+    const content = document.getElementById('modal-content');
+    const tags = document.getElementById('modal-tags');
+    const meta = document.getElementById('modal-meta');
+
+    if (versions.length === 0) {
+      content.innerHTML = '<p class="history-empty">No version history yet.</p>';
+      tags.innerHTML = '';
+      meta.innerHTML = '';
+      return;
+    }
+
+    function showVersionList() {
+      content.innerHTML = `<div class="history-panel">
+        <div class="history-header"><strong>Version history</strong></div>
+        <ul class="history-list">${versions.map((v, i) => `
+          <li class="history-item" data-idx="${i}">
+            <span class="history-date">${new Date(v.savedAt).toLocaleString()}</span>
+            <span class="history-preview">${v.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80)}…</span>
+          </li>`).join('')}</ul>
+      </div>`;
+      tags.innerHTML = '';
+      meta.innerHTML = '';
+
+      content.querySelectorAll('.history-item').forEach(item => {
+        item.addEventListener('click', () => showVersion(Number(item.dataset.idx)));
+      });
+    }
+
+    function showVersion(idx) {
+      const v = versions[idx];
+      content.innerHTML = `<div class="history-panel">
+        <div class="history-header">
+          <button id="hist-back-btn" class="secondary-btn">&#8592; Back</button>
+          <button id="hist-restore-btn" class="secondary-btn">Restore this version</button>
+        </div>
+        <div class="history-preview-full note-body">${v.content}</div>
+      </div>`;
+      meta.textContent = `Saved ${new Date(v.savedAt).toLocaleString()}`;
+      tags.innerHTML = '';
+
+      content.querySelector('#hist-back-btn').addEventListener('click', showVersionList);
+      content.querySelector('#hist-restore-btn').addEventListener('click', async () => {
+        const res = await apiFetch(`/api/notes/${id}/versions/${v.id}/restore`, { method: 'POST' });
+        if (res?.ok) {
+          const updated = await res.json();
+          const idx2 = (window._notes || []).findIndex(n => n.id === id);
+          if (idx2 !== -1) window._notes[idx2] = updated;
+          closeModal();
+          await window._feed?.refresh();
+          open(id);
+        }
+      });
+    }
+
+    showVersionList();
+  }
+
   function closeModal() {
     document.getElementById('note-modal').classList.add('hidden');
   }
@@ -148,10 +224,14 @@ const NoteView = (() => {
     const bodyEl = document.getElementById('edit-editor-body');
     const tagsPreview = document.getElementById('edit-tags-preview');
     const publicEl = document.getElementById('edit-public');
+    const folderEl = document.getElementById('edit-folder');
+    const dueDateEl = document.getElementById('edit-due-date');
 
     titleEl.value = note.title || '';
     bodyEl.innerHTML = note.content;
     publicEl.checked = note.visibility === 'public';
+    if (folderEl) folderEl.value = note.folderId || '';
+    if (dueDateEl) dueDateEl.value = note.dueDate || '';
 
     const tags = extractTagsFromHTML(note.content);
     tagsPreview.innerHTML = renderTagChips(tags);
@@ -173,6 +253,8 @@ const NoteView = (() => {
         content,
         tags: inlineTags,
         visibility: publicEl.checked ? 'public' : 'private',
+        folderId: folderEl?.value || null,
+        dueDate: dueDateEl?.value || null,
       };
       const res = await apiFetch(`/api/notes/${id}`, { method: 'PUT', body });
       if (res?.ok) {
@@ -212,7 +294,8 @@ const NoteView = (() => {
       <button data-cmd="codeblock">\`\`\`</button>
       <button data-cmd="link">&#128279;</button>
       <button data-cmd="hr">&#8213;</button>
-      <button data-cmd="image">&#128444;</button>`;
+      <button data-cmd="image">&#128444;</button>
+      <button data-cmd="table" title="Insert table">&#9868;</button>`;
   }
 
   document.getElementById('modal-close-btn').addEventListener('click', closeModal);

@@ -1,0 +1,394 @@
+.feed-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  align-items: center;
+}
+
+.feed-controls select {
+  width: auto;
+}
+
+.folder-select {
+  width: auto;
+  font-size: 13px;
+}
+
+.due-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.due-overdue {
+  background: #5c1a1a;
+  color: #ff8080;
+}
+
+.due-today {
+  background: #3d3010;
+  color: #ffd060;
+}
+
+.due-soon {
+  background: #1a3020;
+  color: #60d080;
+}
+
+.due-later {
+  background: var(--surface2, #2a2a3e);
+  color: var(--text-muted, #888);
+}
+
+.note-body table,
+#modal-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12px 0;
+  font-size: 14px;
+}
+
+.note-body table th,
+.note-body table td,
+#modal-content table th,
+#modal-content table td {
+  border: 1px solid var(--border, #333);
+  padding: 6px 10px;
+  text-align: left;
+  min-width: 60px;
+}
+
+.note-body table th,
+#modal-content table th {
+  background: var(--surface2, #2a2a3e);
+  font-weight: 600;
+}
+
+#editor-body table th,
+#editor-body table td,
+#edit-editor-body table th,
+#edit-editor-body table td {
+  border: 1px solid var(--border, #333);
+  padding: 6px 10px;
+  min-width: 60px;
+}
+
+#editor-body table th,
+#edit-editor-body table th {
+  background: var(--surface2, #2a2a3e);
+  font-weight: 600;
+}
+
+#table-toolbar {
+  position: fixed;
+  z-index: 500;
+  background: var(--surface, #1e1e2e);
+  border: 1px solid var(--border, #333);
+  border-radius: var(--radius, 6px);
+  padding: 4px;
+  display: flex;
+  gap: 4px;
+}
+
+#table-toolbar.hidden {
+  display: none;
+}
+
+#table-toolbar button {
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--surface2, #2a2a3e);
+  border: 1px solid var(--border, #333);
+  color: var(--text-muted, #888);
+  cursor: pointer;
+}
+
+#table-toolbar button:hover {
+  color: var(--text, #eee);
+}
+
+#calendar-view {
+  padding: 20px;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.cal-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.cal-title {
+  font-size: 18px;
+  font-weight: 600;
+  flex: 1;
+  text-align: center;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-day-header {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted, #888);
+  padding: 4px 0;
+}
+
+.cal-day {
+  min-height: 56px;
+  border: 1px solid var(--border, #333);
+  border-radius: 4px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 13px;
+}
+
+.cal-blank {
+  border-color: transparent;
+  background: transparent;
+}
+
+.cal-today {
+  border-color: var(--accent, #4f8a5f);
+  background: rgba(79, 138, 95, 0.08);
+}
+
+.cal-has-notes {
+  cursor: pointer;
+}
+
+.cal-has-notes:hover {
+  background: var(--surface2, #2a2a3e);
+}
+
+.cal-day-num {
+  font-weight: 500;
+}
+
+.cal-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent, #4f8a5f);
+  margin-top: 2px;
+}
+
+.cal-count {
+  font-size: 10px;
+  color: var(--text-muted, #888);
+  margin-left: 2px;
+}
+
+.cal-day-notes {
+  margin-top: 20px;
+  padding: 12px;
+  background: var(--surface2, #2a2a3e);
+  border-radius: 6px;
+}
+
+.cal-day-notes h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.cal-day-notes ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.cal-note-link {
+  background: none;
+  border: none;
+  color: var(--accent, #4f8a5f);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 0;
+  text-align: left;
+}
+
+.cal-note-link:hover {
+  text-decoration: underline;
+}
+
+.sidebar-section {
+  margin-top: 16px;
+  padding: 0 8px;
+}
+
+.sidebar-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, #888);
+  margin-bottom: 6px;
+  padding: 0 4px;
+}
+
+#folder-list,
+#smart-folder-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 6px;
+}
+
+#folder-list li,
+#smart-folder-list li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.folder-btn,
+.smart-folder-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text, #eee);
+  font-size: 13px;
+  text-align: left;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.folder-btn:hover,
+.smart-folder-btn:hover,
+.folder-btn.active {
+  background: var(--surface2, #2a2a3e);
+}
+
+.folder-delete-btn,
+.smart-folder-delete {
+  background: none;
+  border: none;
+  color: var(--text-muted, #888);
+  cursor: pointer;
+  padding: 2px 5px;
+  font-size: 14px;
+  border-radius: 3px;
+}
+
+.folder-delete-btn:hover,
+.smart-folder-delete:hover {
+  color: var(--danger, #e05);
+}
+
+#new-folder-btn {
+  font-size: 12px;
+  padding: 3px 8px;
+  width: 100%;
+}
+
+.history-panel {
+  padding: 0;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border, #333);
+}
+
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.history-item {
+  padding: 10px 12px;
+  border: 1px solid var(--border, #333);
+  border-radius: 4px;
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+
+.history-item:hover {
+  background: var(--surface2, #2a2a3e);
+}
+
+.history-date {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted, #888);
+  margin-bottom: 4px;
+}
+
+.history-preview {
+  font-size: 13px;
+}
+
+.history-preview-full {
+  margin-top: 12px;
+}
+
+.history-empty {
+  color: var(--text-muted, #888);
+  font-style: italic;
+}
+
+#templates-modal .modal-box {
+  max-width: 500px;
+}
+
+.template-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border, #333);
+}
+
+.template-item:last-child {
+  border-bottom: none;
+}
+
+.template-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.template-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.empty-hint {
+  color: var(--text-muted, #888);
+  font-size: 13px;
+  font-style: italic;
+  padding: 4px 0;
+}
+
+.due-date-input {
+  font-size: 13px;
+  padding: 4px 6px;
+  background: var(--surface2, #2a2a3e);
+  border: 1px solid var(--border, #333);
+  border-radius: 4px;
+  color: var(--text, #eee);
+  height: 32px;
+}

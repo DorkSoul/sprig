@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sprig</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#4f8a5f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
 </head>
 <body>
 
@@ -74,10 +78,20 @@
           <button class="nav-item active" data-view="feed">Feed</button>
           <button class="nav-item" data-view="public">Public</button>
           <button class="nav-item" data-view="graph">Graph</button>
+          <button class="nav-item" data-view="calendar">Calendar</button>
         </nav>
         <div class="sidebar-section">
           <div class="sidebar-section-title">Tags</div>
           <ul id="tag-list"></ul>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Folders</div>
+          <ul id="folder-list"></ul>
+          <button id="new-folder-btn" class="secondary-btn">+ New folder</button>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Smart Folders</div>
+          <ul id="smart-folder-list"></ul>
         </div>
       </aside>
 
@@ -94,6 +108,9 @@
               <label class="visibility-toggle">
                 <input type="checkbox" id="editor-public"> Public
               </label>
+              <select id="editor-folder" class="folder-select"><option value="">No folder</option></select>
+              <input type="date" id="editor-due-date" title="Due date" class="due-date-input">
+              <button id="editor-template-btn" class="secondary-btn">Templates</button>
               <button id="editor-import-btn" class="secondary-btn" title="Import Markdown file">Import .md</button>
               <button id="editor-save-btn">Save</button>
             </div>
@@ -117,10 +134,20 @@
               <button data-cmd="link" title="Link">&#128279;</button>
               <button data-cmd="hr" title="Horizontal rule">&#8213;</button>
               <button data-cmd="image" title="Insert image">&#128444;</button>
+              <button data-cmd="table" title="Insert table">&#9868;</button>
             </div>
             </div><!-- /.editor-sticky-header -->
             <div id="editor-body" contenteditable="true" data-placeholder="What's on your mind..."></div>
             <div id="editor-tags-preview"></div>
+          </div>
+
+          <div class="feed-controls">
+            <select id="feed-sort">
+              <option value="updated_desc">Recent</option>
+              <option value="updated_asc">Oldest updated</option>
+              <option value="created_desc">Newest created</option>
+              <option value="title_asc">Title A&#8211;Z</option>
+            </select>
           </div>
 
           <div id="note-feed"></div>
@@ -140,9 +167,12 @@
 
         <!-- Search results view -->
         <div id="search-view" class="hidden">
-          <h2 class="view-title">Search results</h2>
+          <h2 class="view-title">Search results <button id="save-search-btn" class="secondary-btn">Save search</button></h2>
           <div id="search-feed"></div>
         </div>
+
+        <!-- Calendar view -->
+        <div id="calendar-view" class="hidden"></div>
 
       </main>
 
@@ -164,6 +194,7 @@
         </div>
         <div class="modal-actions">
           <button id="modal-edit-btn">Edit</button>
+          <button id="modal-history-btn">History</button>
           <button id="modal-export-html-btn">Export HTML</button>
           <button id="modal-export-text-btn">Export text</button>
           <button id="modal-delete-btn" class="danger-btn">Delete</button>
@@ -186,6 +217,8 @@
           <label class="visibility-toggle">
             <input type="checkbox" id="edit-public"> Public
           </label>
+          <select id="edit-folder" class="folder-select"><option value="">No folder</option></select>
+          <input type="date" id="edit-due-date" title="Due date" class="due-date-input">
           <button id="edit-save-btn">Save changes</button>
         </div>
       </div>
@@ -245,6 +278,14 @@
     <div class="img-handle" data-pos="w"></div>
   </div>
 
+  <!-- Table toolbar -->
+  <div id="table-toolbar" class="hidden">
+    <button data-tbl="addRow">+Row</button>
+    <button data-tbl="addCol">+Col</button>
+    <button data-tbl="deleteRow">&#8722;Row</button>
+    <button data-tbl="deleteCol">&#8722;Col</button>
+  </div>
+
   <!-- Note link autocomplete -->
   <div id="link-autocomplete" class="hidden">
     <ul id="link-autocomplete-list"></ul>
@@ -261,6 +302,18 @@
     </div>
   </div>
 
+  <!-- Templates modal -->
+  <div id="templates-modal" class="modal-overlay hidden">
+    <div class="modal-box" style="max-width:500px">
+      <div class="modal-header"><h2>Templates</h2><button class="modal-close" id="templates-modal-close">&times;</button></div>
+      <div id="templates-list" style="padding:16px 24px;flex:1;overflow-y:auto;"></div>
+      <div class="modal-footer">
+        <button id="save-as-template-btn" class="secondary-btn">Save current note as template</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script type="module" src="/js/main.js"></script>
 </body>
 </html>

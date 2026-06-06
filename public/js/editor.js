@@ -89,7 +89,7 @@ const Editor = (() => {
   }
 
   function initToolbar(toolbarEl, bodyEl, tagsPreviewEl) {
-    if (!_imgResizeInit) { initImgResize(); _imgResizeInit = true; }
+    if (!_imgResizeInit) { initImgResize(); initTableToolbar(); _imgResizeInit = true; }
     _activeEditorBody = bodyEl;
     _activeTagsPreview = tagsPreviewEl;
 
@@ -215,7 +215,51 @@ const Editor = (() => {
       case 'link': insertLink(sel, triggerEl); break;
       case 'hr': insertHR(bodyEl); break;
       case 'image': triggerImageUpload(bodyEl); break;
+      case 'table': insertTable(bodyEl, sel); break;
     }
+  }
+
+  function insertTable(bodyEl, sel) {
+    const range = sel.getRangeAt(0);
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    for (let i = 0; i < 3; i++) {
+      const th = document.createElement('th');
+      th.textContent = 'Header';
+      headerRow.appendChild(th);
+    }
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    for (let r = 0; r < 3; r++) {
+      const tr = document.createElement('tr');
+      for (let c = 0; c < 3; c++) {
+        const td = document.createElement('td');
+        td.innerHTML = '<br>';
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+
+    const block = closestBlock(range.commonAncestorContainer, bodyEl);
+    if (block) {
+      block.after(table);
+    } else {
+      range.insertNode(table);
+    }
+
+    const firstTh = table.querySelector('th');
+    if (firstTh) {
+      const newRange = document.createRange();
+      newRange.selectNodeContents(firstTh);
+      newRange.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+    }
+
+    updateTableToolbar();
   }
 
   function wrapInline(tag, sel) {
@@ -775,8 +819,113 @@ const Editor = (() => {
 
   function handleTabKey(e) {
     if (e.key !== 'Tab') return;
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const node = sel.focusNode;
+      const cell = (node?.nodeType === Node.TEXT_NODE ? node.parentNode : node)?.closest('td, th');
+      if (cell) {
+        e.preventDefault();
+        const table = cell.closest('table');
+        const cells = [...table.querySelectorAll('td, th')];
+        const idx = cells.indexOf(cell);
+        if (idx < cells.length - 1) {
+          const next = cells[idx + 1];
+          const newRange = document.createRange();
+          newRange.selectNodeContents(next);
+          newRange.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(newRange);
+        } else {
+          const tbody = table.querySelector('tbody');
+          const tr = document.createElement('tr');
+          const colCount = table.querySelector('tr').children.length;
+          for (let i = 0; i < colCount; i++) {
+            const td = document.createElement('td');
+            td.innerHTML = '<br>';
+            tr.appendChild(td);
+          }
+          tbody.appendChild(tr);
+          const firstCell = tr.querySelector('td');
+          const newRange = document.createRange();
+          newRange.selectNodeContents(firstCell);
+          newRange.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(newRange);
+        }
+        return;
+      }
+    }
     e.preventDefault();
     insertTextAtCursor(e.shiftKey ? '' : '  ');
+  }
+
+  function updateTableToolbar() {
+    const toolbar = document.getElementById('table-toolbar');
+    if (!toolbar) return;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) { toolbar.classList.add('hidden'); return; }
+    const node = sel.focusNode;
+    const cell = (node?.nodeType === Node.TEXT_NODE ? node.parentNode : node)?.closest('td, th');
+    if (!cell) { toolbar.classList.add('hidden'); return; }
+    const rect = cell.getBoundingClientRect();
+    toolbar.style.top = `${rect.top - toolbar.offsetHeight - 6}px`;
+    toolbar.style.left = `${rect.left}px`;
+    toolbar.classList.remove('hidden');
+  }
+
+  document.addEventListener('selectionchange', updateTableToolbar);
+
+  function tableToolbarAction(action) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const node = sel.focusNode;
+    const cell = (node?.nodeType === Node.TEXT_NODE ? node.parentNode : node)?.closest('td, th');
+    if (!cell) return;
+    const table = cell.closest('table');
+    const tbody = table.querySelector('tbody');
+    const thead = table.querySelector('thead');
+
+    if (action === 'addRow') {
+      const colCount = table.querySelector('tr').children.length;
+      const tr = document.createElement('tr');
+      for (let i = 0; i < colCount; i++) {
+        const td = document.createElement('td');
+        td.innerHTML = '<br>';
+        tr.appendChild(td);
+      }
+      const currentRow = cell.closest('tr');
+      currentRow.after(tr);
+    } else if (action === 'deleteRow') {
+      const currentRow = cell.closest('tr');
+      const allRows = [...table.querySelectorAll('tr')];
+      if (allRows.length > 1) currentRow.remove();
+    } else if (action === 'addCol') {
+      table.querySelectorAll('tr').forEach((tr, i) => {
+        const cells = [...tr.children];
+        const cellEl = cell.closest('tr') === tr ? cell : null;
+        const insertAfter = cellEl || cells[cells.length - 1];
+        const newCell = document.createElement(i === 0 && thead ? 'th' : 'td');
+        newCell.innerHTML = i === 0 ? 'Header' : '<br>';
+        insertAfter.after(newCell);
+      });
+    } else if (action === 'deleteCol') {
+      const cellIdx = [...cell.closest('tr').children].indexOf(cell);
+      table.querySelectorAll('tr').forEach(tr => {
+        const cells = [...tr.children];
+        if (cells.length > 1) cells[cellIdx]?.remove();
+      });
+    }
+  }
+
+  function initTableToolbar() {
+    const toolbar = document.getElementById('table-toolbar');
+    if (!toolbar) return;
+    toolbar.querySelectorAll('[data-tbl]').forEach(btn => {
+      btn.addEventListener('mousedown', e => {
+        e.preventDefault();
+        tableToolbarAction(btn.dataset.tbl);
+      });
+    });
   }
 
   function insertTextAtCursor(text) {
