@@ -72,73 +72,46 @@ const NoteView = (() => {
   }
 
   function addCollapsibleHeadings(container) {
-    const children = Array.from(container.children);
     const headingTags = new Set(['H1', 'H2', 'H3']);
     const headingLevel = { H1: 1, H2: 2, H3: 3 };
+    const children = Array.from(container.children);
+    const sections = [];
 
-    const hasContent = children.some((el, i) => {
-      if (!headingTags.has(el.tagName)) return false;
+    for (let i = 0; i < children.length; i++) {
+      const el = children[i];
+      if (!headingTags.has(el.tagName)) continue;
       const level = headingLevel[el.tagName];
+      const sectionEls = [];
       for (let j = i + 1; j < children.length; j++) {
         const next = children[j];
         if (headingTags.has(next.tagName) && headingLevel[next.tagName] <= level) break;
-        return true;
+        sectionEls.push(next);
       }
-      return false;
-    });
+      if (sectionEls.length > 0) sections.push({ el, sectionEls, collapsed: false });
+    }
 
-    if (!hasContent) return;
+    if (sections.length === 0) return;
 
-    children.forEach((el, i) => {
-      if (!headingTags.has(el.tagName)) return;
-      const level = headingLevel[el.tagName];
-
-      let hasSectionContent = false;
-      for (let j = i + 1; j < children.length; j++) {
-        const next = children[j];
-        if (headingTags.has(next.tagName) && headingLevel[next.tagName] <= level) break;
-        hasSectionContent = true;
-        break;
+    function applyVisibility() {
+      children.forEach(el => { el.style.display = ''; });
+      for (const s of sections) {
+        if (s.collapsed) s.sectionEls.forEach(el => { el.style.display = 'none'; });
       }
-      if (!hasSectionContent) return;
+    }
 
+    for (const s of sections) {
       const btn = document.createElement('button');
       btn.className = 'heading-toggle';
       btn.setAttribute('aria-label', 'Toggle section');
       btn.textContent = '▼';
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        const collapsed = btn.textContent === '▶';
-        btn.textContent = collapsed ? '▼' : '▶';
-        el.dataset.collapsed = collapsed ? '' : 'true';
-        updateSectionVisibility(Array.from(container.children));
+        s.collapsed = !s.collapsed;
+        btn.textContent = s.collapsed ? '▶' : '▼';
+        applyVisibility();
       });
-
-      el.insertBefore(btn, el.firstChild);
-    });
-  }
-
-  function updateSectionVisibility(children) {
-    const headingTags = new Set(['H1', 'H2', 'H3']);
-    const headingLevel = { H1: 1, H2: 2, H3: 3 };
-    let activeCollapsedLevel = null;
-
-    children.forEach(el => {
-      if (headingTags.has(el.tagName)) {
-        const level = headingLevel[el.tagName];
-        if (activeCollapsedLevel !== null && level > activeCollapsedLevel) {
-          el.style.display = 'none';
-          return;
-        }
-        activeCollapsedLevel = null;
-        el.style.display = '';
-        if (el.dataset.collapsed === 'true') {
-          activeCollapsedLevel = level;
-        }
-      } else {
-        el.style.display = activeCollapsedLevel !== null ? 'none' : '';
-      }
-    });
+      s.el.insertBefore(btn, s.el.firstChild);
+    }
   }
 
   function closeModal() {
