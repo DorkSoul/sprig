@@ -357,7 +357,11 @@ const Editor = (() => {
         clone.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.remove());
         newEl.innerHTML = clone.innerHTML.trim() || '<br>';
         const list = block.closest('ul, ol');
-        block.before(newEl);
+        if (lastEl) {
+          lastEl.after(newEl);
+        } else {
+          list.before(newEl);
+        }
         block.remove();
         if (list && list.children.length === 0) list.remove();
       } else {
@@ -394,10 +398,14 @@ const Editor = (() => {
         const p = document.createElement('p');
         p.innerHTML = block.innerHTML.trim() || '<br>';
         const list = block.closest('ul, ol');
-        block.before(p);
+        if (lastEl) {
+          lastEl.after(p);
+        } else {
+          list.before(p);
+        }
+        lastEl = p;
         block.remove();
         if (list && list.children.length === 0) list.remove();
-        lastEl = p;
       }
     } else {
       const newList = document.createElement(listTag);
@@ -450,10 +458,14 @@ const Editor = (() => {
         clone.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.remove());
         p.textContent = clone.textContent.replace(/^\s*/, '');
         const list = block.closest('ul, ol');
-        block.before(p);
+        if (lastEl) {
+          lastEl.after(p);
+        } else {
+          list.before(p);
+        }
+        lastEl = p;
         block.remove();
         if (list && list.children.length === 0) list.remove();
-        lastEl = p;
       }
       if (lastEl) {
         const newRange = document.createRange();
