@@ -302,8 +302,20 @@ const Editor = (() => {
     sel.addRange(newRange);
   }
 
+  function inTableCell(node) {
+    let n = node?.nodeType === Node.TEXT_NODE ? node.parentNode : node;
+    while (n) {
+      const t = n.tagName?.toLowerCase();
+      if (t === 'td' || t === 'th') return true;
+      if (t === 'table') return false;
+      n = n.parentNode;
+    }
+    return false;
+  }
+
   function getSelectedBlocks(range, bodyEl) {
     if (range.collapsed) {
+      if (inTableCell(range.commonAncestorContainer)) return [];
       const b = closestBlock(range.commonAncestorContainer, bodyEl);
       return b ? [b] : [];
     }
@@ -867,10 +879,22 @@ const Editor = (() => {
     const node = sel.focusNode;
     const cell = (node?.nodeType === Node.TEXT_NODE ? node.parentNode : node)?.closest('td, th');
     if (!cell) { toolbar.classList.add('hidden'); return; }
-    const rect = cell.getBoundingClientRect();
-    toolbar.style.top = `${rect.top - toolbar.offsetHeight - 6}px`;
-    toolbar.style.left = `${rect.left}px`;
+    const table = cell.closest('table');
+    const rect = table.getBoundingClientRect();
     toolbar.classList.remove('hidden');
+    const toolbarH = toolbar.offsetHeight || 32;
+    toolbar.style.top = `${Math.max(4, rect.top - toolbarH - 6)}px`;
+    toolbar.style.left = `${rect.left}px`;
+  }
+
+  function focusCell(cell) {
+    if (!cell) return;
+    const sel = window.getSelection();
+    const r = document.createRange();
+    r.selectNodeContents(cell);
+    r.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(r);
   }
 
   document.addEventListener('selectionchange', updateTableToolbar);
@@ -882,8 +906,11 @@ const Editor = (() => {
     const cell = (node?.nodeType === Node.TEXT_NODE ? node.parentNode : node)?.closest('td, th');
     if (!cell) return;
     const table = cell.closest('table');
-    const tbody = table.querySelector('tbody');
     const thead = table.querySelector('thead');
+    const currentRow = cell.closest('tr');
+    const allRows = [...table.querySelectorAll('tr')];
+    const rowIdx = allRows.indexOf(currentRow);
+    const cellIdx = [...currentRow.children].indexOf(cell);
 
     if (action === 'addRow') {
       const colCount = table.querySelector('tr').children.length;
@@ -893,28 +920,75 @@ const Editor = (() => {
         td.innerHTML = '<br>';
         tr.appendChild(td);
       }
-      const currentRow = cell.closest('tr');
       currentRow.after(tr);
+      focusCell(tr.cells[cellIdx] || tr.cells[0]);
     } else if (action === 'deleteRow') {
-      const currentRow = cell.closest('tr');
-      const allRows = [...table.querySelectorAll('tr')];
-      if (allRows.length > 1) currentRow.remove();
+      if (allRows.length <= 1) return;
+      const nextRow = allRows[rowIdx + 1] || allRows[rowIdx - 1];
+      currentRow.remove();
+      if (nextRow) focusCell(nextRow.cells[Math.min(cellIdx, nextRow.cells.length - 1)]);
     } else if (action === 'addCol') {
       table.querySelectorAll('tr').forEach((tr, i) => {
         const cells = [...tr.children];
-        const cellEl = cell.closest('tr') === tr ? cell : null;
-        const insertAfter = cellEl || cells[cells.length - 1];
+        const insertAfter = tr === currentRow ? cell : (cells[cellIdx] || cells[cells.length - 1]);
         const newCell = document.createElement(i === 0 && thead ? 'th' : 'td');
-        newCell.innerHTML = i === 0 ? 'Header' : '<br>';
+        newCell.innerHTML = i === 0 && thead ? 'Header' : '<br>';
         insertAfter.after(newCell);
       });
+      const newCell = currentRow.cells[cellIdx + 1];
+      if (newCell) focusCell(newCell);
     } else if (action === 'deleteCol') {
-      const cellIdx = [...cell.closest('tr').children].indexOf(cell);
+      const colCount = currentRow.children.length;
+      if (colCount <= 1) return;
       table.querySelectorAll('tr').forEach(tr => {
-        const cells = [...tr.children];
-        if (cells.length > 1) cells[cellIdx]?.remove();
+        const c = tr.children[cellIdx];
+        if (c) c.remove();
       });
+      const nextCell = currentRow.cells[Math.min(cellIdx, currentRow.cells.length - 1)];
+      if (nextCell) focusCell(nextCell);
+    } else if (action === 'mergeRight') {
+      const right = cell.nextElementSibling;
+      if (!right) return;
+      const span = parseInt(cell.getAttribute('colspan') || 1);
+      cell.setAttribute('colspan', span + 1);
+      if (right.textContent.trim()) cell.innerHTML += ' ' + right.innerHTML;
+      right.remove();
+      focusCell(cell);
+    } else if (action === 'mergeDown') {
+      const nextRow = allRows[rowIdx + 1];
+      if (!nextRow) return;
+      const below = nextRow.cells[cellIdx];
+      if (!below) return;
+      const span = parseInt(cell.getAttribute('rowspan') || 1);
+      cell.setAttribute('rowspan', span + 1);
+      if (below.textContent.trim()) cell.innerHTML += ' ' + below.innerHTML;
+      below.remove();
+      focusCell(cell);
+    } else if (action === 'splitCell') {
+      const colspan = parseInt(cell.getAttribute('colspan') || 1);
+      const rowspan = parseInt(cell.getAttribute('rowspan') || 1);
+      if (colspan > 1) {
+        cell.removeAttribute('colspan');
+        for (let i = 1; i < colspan; i++) {
+          const newCell = document.createElement(cell.tagName.toLowerCase());
+          newCell.innerHTML = '<br>';
+          cell.after(newCell);
+        }
+      } else if (rowspan > 1) {
+        cell.removeAttribute('rowspan');
+        for (let i = 1; i < rowspan; i++) {
+          const targetRow = allRows[rowIdx + i];
+          if (targetRow) {
+            const newCell = document.createElement(cell.tagName.toLowerCase());
+            newCell.innerHTML = '<br>';
+            const ref = targetRow.cells[cellIdx];
+            if (ref) ref.before(newCell); else targetRow.appendChild(newCell);
+          }
+        }
+      }
+      focusCell(cell);
     }
+    setTimeout(updateTableToolbar, 0);
   }
 
   function initTableToolbar() {

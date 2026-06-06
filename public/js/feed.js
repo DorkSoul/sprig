@@ -105,15 +105,7 @@ const Feed = (() => {
   }
 
   function renderCard(note, opts = {}) {
-    const previewHtml = note.content.replace(/(\s*<(?:p|div|br)[^>]*>)?\s*(<span class="tag-inline">#[a-zA-Z0-9_-]+<\/span>\s*)+(<\/(?:p|div)>)?\s*$/gi, '');
-    const preview = previewHtml
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/(?:p|li|h[1-6]|blockquote|div)>/gi, '\n')
-      .replace(/<[^>]+>/g, '')
-      .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
-      .split('\n').map(l => l.trim()).filter(Boolean)
-      .join('\n').slice(0, 300)
-      .replace(/\n/g, '<br>');
+    const previewContent = note.content.replace(/(\s*<(?:p|div|br)[^>]*>)?\s*(<span class="tag-inline">#[a-zA-Z0-9_-]+<\/span>\s*)+(<\/(?:p|div)>)?\s*$/gi, '');
     const tags = renderTagChips(note.tags || []);
     const pinClass = note.pinned ? ' pinned' : '';
     const publicBadge = note.visibility === 'public' ? '<span class="public-badge">public</span>' : '';
@@ -130,7 +122,8 @@ const Feed = (() => {
       <div class="note-card${pinClass}" data-id="${note.id}">
         ${actionsHtml}
         ${titleHtml}
-        <div class="note-card-preview">${preview || '<em>Empty note</em>'}</div>
+        <div class="note-card-preview note-body">${previewContent || '<em>Empty note</em>'}</div>
+        <div class="preview-resize-handle" title="Drag to resize preview"></div>
         <div class="note-card-footer">
           <div class="note-tags">${tags}${publicBadge}${dueBadge}</div>
           <span class="note-meta">${formatDate(note.updatedAt || note.createdAt)}</span>

@@ -54,6 +54,23 @@ export function renderTagChips(tags) {
   return tags.map(t => `<span class="tag-chip">#${enc(t)}</span>`).join('');
 }
 
+export function syncDueDateDisplay(inputId, btnId, clearId) {
+  const input = document.getElementById(inputId);
+  const btn = document.getElementById(btnId);
+  const clear = document.getElementById(clearId);
+  if (!input || !btn || !clear) return;
+  const val = input.value;
+  if (val) {
+    const [y, m, d] = val.split('-').map(Number);
+    const label = new Date(y, m - 1, d).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    btn.textContent = 'Due: ' + label;
+    clear.classList.remove('hidden');
+  } else {
+    btn.textContent = 'Due date';
+    clear.classList.add('hidden');
+  }
+}
+
 export function parseMarkdown(md) {
   const lines = md.split('\n');
   const out = [];

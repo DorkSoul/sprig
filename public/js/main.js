@@ -10,7 +10,7 @@ import Folders from './folders.js';
 import Searches from './searches.js';
 import Calendar from './calendar.js';
 import Templates from './templates.js';
-import { apiFetch, extractTagsFromHTML } from './utils.js';
+import { apiFetch, extractTagsFromHTML, syncDueDateDisplay } from './utils.js';
 
 window._auth = Auth;
 window._editor = Editor;
@@ -39,6 +39,7 @@ Auth.init(async userData => {
   initSort();
   initSaveSearch();
   initTemplatesModal();
+  initPreviewResize();
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
@@ -58,6 +59,8 @@ function initInlineEditor() {
   Editor.initToolbar(toolbarEl, bodyEl, tagsPreview);
   Editor.initImport(bodyEl, tagsPreview);
   Editor.loadDraft('sprig-draft', bodyEl, titleEl);
+
+  initDueDatePicker('editor-due-date', 'editor-due-btn', 'editor-due-clear');
 
   bodyEl.addEventListener('input', () => {
     Editor.saveDraft('sprig-draft', bodyEl, titleEl);
@@ -90,7 +93,7 @@ function initInlineEditor() {
       titleEl.value = '';
       publicEl.checked = false;
       if (folderEl) folderEl.value = '';
-      if (dueDateEl) dueDateEl.value = '';
+      if (dueDateEl) { dueDateEl.value = ''; syncDueDateDisplay('editor-due-date', 'editor-due-btn', 'editor-due-clear'); }
       await Feed.refresh();
     }
   });
@@ -100,6 +103,51 @@ function initInlineEditor() {
       e.preventDefault();
       saveBtn.click();
     }
+  });
+}
+
+function initDueDatePicker(inputId, btnId, clearId) {
+  const input = document.getElementById(inputId);
+  const btn = document.getElementById(btnId);
+  const clear = document.getElementById(clearId);
+  if (!input || !btn || !clear) return;
+
+  input.addEventListener('change', () => syncDueDateDisplay(inputId, btnId, clearId));
+
+  clear.addEventListener('click', e => {
+    e.stopPropagation();
+    input.value = '';
+    syncDueDateDisplay(inputId, btnId, clearId);
+  });
+}
+
+function initPreviewResize() {
+  const KEY = 'sprig_preview_height';
+  let previewHeight = parseInt(localStorage.getItem(KEY)) || 200;
+
+  function applyHeight() {
+    document.documentElement.style.setProperty('--preview-height', previewHeight + 'px');
+  }
+  applyHeight();
+
+  document.addEventListener('mousedown', e => {
+    const handle = e.target.closest('.preview-resize-handle');
+    if (!handle) return;
+    e.preventDefault();
+    const startY = e.clientY;
+    const startH = previewHeight;
+
+    const onMove = ev => {
+      previewHeight = Math.max(60, Math.min(1200, startH + (ev.clientY - startY)));
+      applyHeight();
+    };
+    const onUp = () => {
+      localStorage.setItem(KEY, previewHeight);
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
   });
 }
 

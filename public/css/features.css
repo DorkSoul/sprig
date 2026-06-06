@@ -1,3 +1,68 @@
+/* ── Select / dropdown dark-theme override ─────────────────────── */
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: var(--surface2);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 7px 28px 7px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  width: auto;
+}
+select:focus { border-color: var(--accent); }
+select option { background: var(--surface2); color: var(--text); }
+
+/* ── Due date custom picker ──────────────────────────────────────── */
+.due-date-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.due-date-btn {
+  font-size: 12px;
+  padding: 6px 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.due-date-btn:hover { color: var(--text); border-color: #555; }
+.due-date-clear {
+  font-size: 11px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.due-date-clear:hover { color: var(--danger); border-color: var(--danger); }
+.due-date-native {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(100% - 26px);
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* ── Feed controls ───────────────────────────────────────────────── */
 .feed-controls {
   display: flex;
   gap: 8px;
@@ -5,13 +70,16 @@
   align-items: center;
 }
 
-.feed-controls select {
-  width: auto;
+.folder-select {
+  font-size: 13px;
 }
 
-.folder-select {
-  width: auto;
-  font-size: 13px;
+/* ── Table toolbar separator ─────────────────────────────────────── */
+.tbl-sep {
+  width: 1px;
+  background: var(--border);
+  align-self: stretch;
+  margin: 2px 2px;
 }
 
 .due-badge {

@@ -20,6 +20,8 @@ const ALLOWED_ATTRS = {
   pre: ['class'],
   img: ['src', 'alt', 'style'],
   input: ['type', 'checked'],
+  td: ['colspan', 'rowspan'],
+  th: ['colspan', 'rowspan'],
 };
 
 function sanitizeHTML(html) {

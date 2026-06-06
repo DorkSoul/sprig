@@ -109,7 +109,11 @@
                 <input type="checkbox" id="editor-public"> Public
               </label>
               <select id="editor-folder" class="folder-select"><option value="">No folder</option></select>
-              <input type="date" id="editor-due-date" title="Due date" class="due-date-input">
+              <span class="due-date-wrap">
+                <button type="button" id="editor-due-btn" class="due-date-btn">Due date</button>
+                <button type="button" id="editor-due-clear" class="due-date-clear hidden">&#10005;</button>
+                <input type="date" id="editor-due-date" class="due-date-native" tabindex="-1">
+              </span>
               <button id="editor-template-btn" class="secondary-btn">Templates</button>
               <button id="editor-import-btn" class="secondary-btn" title="Import Markdown file">Import .md</button>
               <button id="editor-save-btn">Save</button>
@@ -218,7 +222,11 @@
             <input type="checkbox" id="edit-public"> Public
           </label>
           <select id="edit-folder" class="folder-select"><option value="">No folder</option></select>
-          <input type="date" id="edit-due-date" title="Due date" class="due-date-input">
+          <span class="due-date-wrap">
+              <button type="button" id="edit-due-btn" class="due-date-btn">Due date</button>
+              <button type="button" id="edit-due-clear" class="due-date-clear hidden">&#10005;</button>
+              <input type="date" id="edit-due-date" class="due-date-native" tabindex="-1">
+            </span>
           <button id="edit-save-btn">Save changes</button>
         </div>
       </div>
@@ -280,10 +288,14 @@
 
   <!-- Table toolbar -->
   <div id="table-toolbar" class="hidden">
-    <button data-tbl="addRow">+Row</button>
-    <button data-tbl="addCol">+Col</button>
-    <button data-tbl="deleteRow">&#8722;Row</button>
-    <button data-tbl="deleteCol">&#8722;Col</button>
+    <button data-tbl="addRow" title="Insert row below">+Row</button>
+    <button data-tbl="deleteRow" title="Delete row">&#8722;Row</button>
+    <button data-tbl="addCol" title="Insert column right">+Col</button>
+    <button data-tbl="deleteCol" title="Delete column">&#8722;Col</button>
+    <span class="tbl-sep"></span>
+    <button data-tbl="mergeRight" title="Merge with cell to the right">&#8614;Merge</button>
+    <button data-tbl="mergeDown" title="Merge with cell below">&#8615;Merge</button>
+    <button data-tbl="splitCell" title="Split merged cell">Split</button>
   </div>
 
   <!-- Note link autocomplete -->

@@ -1,4 +1,4 @@
-import { formatDate, enc, apiFetch, extractTagsFromHTML, renderTagChips } from './utils.js';
+import { formatDate, enc, apiFetch, extractTagsFromHTML, renderTagChips, syncDueDateDisplay } from './utils.js';
 
 const NoteView = (() => {
   function open(id) {
@@ -231,7 +231,10 @@ const NoteView = (() => {
     bodyEl.innerHTML = note.content;
     publicEl.checked = note.visibility === 'public';
     if (folderEl) folderEl.value = note.folderId || '';
-    if (dueDateEl) dueDateEl.value = note.dueDate || '';
+    if (dueDateEl) {
+      dueDateEl.value = note.dueDate || '';
+      syncDueDateDisplay('edit-due-date', 'edit-due-btn', 'edit-due-clear');
+    }
 
     const tags = extractTagsFromHTML(note.content);
     tagsPreview.innerHTML = renderTagChips(tags);
@@ -241,8 +244,7 @@ const NoteView = (() => {
       toolbarEl.innerHTML = buildToolbarHTML();
       window._editor?.initToolbar(toolbarEl, bodyEl, tagsPreview);
       toolbarEl.dataset.initialized = '1';
-    } else {
-      window._editor?.initToolbar(toolbarEl, bodyEl, tagsPreview);
+      initEditDueDatePicker();
     }
 
     document.getElementById('edit-save-btn').onclick = async () => {
@@ -296,6 +298,19 @@ const NoteView = (() => {
       <button data-cmd="hr">&#8213;</button>
       <button data-cmd="image">&#128444;</button>
       <button data-cmd="table" title="Insert table">&#9868;</button>`;
+  }
+
+  function initEditDueDatePicker() {
+    const input = document.getElementById('edit-due-date');
+    const btn = document.getElementById('edit-due-btn');
+    const clear = document.getElementById('edit-due-clear');
+    if (!input || !btn || !clear) return;
+    input.addEventListener('change', () => syncDueDateDisplay('edit-due-date', 'edit-due-btn', 'edit-due-clear'));
+    clear.addEventListener('click', e => {
+      e.stopPropagation();
+      input.value = '';
+      syncDueDateDisplay('edit-due-date', 'edit-due-btn', 'edit-due-clear');
+    });
   }
 
   document.getElementById('modal-close-btn').addEventListener('click', closeModal);
