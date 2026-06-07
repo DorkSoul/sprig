@@ -374,14 +374,6 @@ const Editor = (() => {
     const blocks = getSelectedBlocks(range, bodyEl);
     if (!blocks.length) return;
 
-    // If bullet button is clicked while cursor is in a checklist, toggle the checklist off
-    if (listTag === 'ul') {
-      const allChecklist = blocks.every(b =>
-        b.tagName.toLowerCase() === 'li' && !!b.querySelector('input[type="checkbox"]')
-      );
-      if (allChecklist) { insertChecklist(bodyEl, sel); return; }
-    }
-
     const allInTargetList = blocks.every(b => {
       if (b.tagName.toLowerCase() !== 'li') return false;
       const list = b.closest('ul, ol');
@@ -402,7 +394,9 @@ const Editor = (() => {
       const newList = document.createElement(listTag);
       for (const block of blocks) {
         const li = document.createElement('li');
-        li.innerHTML = block.innerHTML;
+        const clone = block.cloneNode(true);
+        clone.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.remove());
+        li.innerHTML = clone.innerHTML.replace(/^\s*/, '');
         newList.appendChild(li);
         lastEl = li;
       }
