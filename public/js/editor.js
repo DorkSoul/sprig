@@ -316,11 +316,7 @@ const Editor = (() => {
   function getSelectedBlocks(range, bodyEl) {
     if (range.collapsed) {
       if (inTableCell(range.commonAncestorContainer)) return [];
-      const anchor = range.commonAncestorContainer;
-      // If cursor is directly in a ul/ol (not inside a li), don't format
-      const directList = (anchor.nodeType === Node.ELEMENT_NODE ? anchor : anchor.parentNode)?.closest?.('ul, ol');
-      if (directList && !anchor.closest?.('li')) return [];
-      const b = closestBlock(anchor, bodyEl);
+      const b = closestBlock(range.commonAncestorContainer, bodyEl);
       return b ? [b] : [];
     }
     const leafTags = new Set(['p','h1','h2','h3','li','blockquote','pre']);
