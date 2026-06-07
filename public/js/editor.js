@@ -284,7 +284,17 @@ const Editor = (() => {
     }
 
     if (existing) {
+      const parent = existing.parentNode;
+      const firstChild = existing.firstChild;
+      const lastChild = existing.lastChild;
       unwrapNode(existing);
+      if (firstChild && lastChild) {
+        const newRange = document.createRange();
+        newRange.setStartBefore(firstChild);
+        newRange.setEndAfter(lastChild);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+      }
       return;
     }
 
