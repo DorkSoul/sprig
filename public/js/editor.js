@@ -352,14 +352,7 @@ const Editor = (() => {
         const clone = block.cloneNode(true);
         clone.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.remove());
         newEl.innerHTML = clone.innerHTML.trim() || '<br>';
-        const list = block.closest('ul, ol');
-        if (lastEl) {
-          lastEl.after(newEl);
-        } else {
-          list.before(newEl);
-        }
-        block.remove();
-        if (list && list.children.length === 0) list.remove();
+        hoistFromList(block, newEl);
       } else {
         newEl.innerHTML = block.innerHTML;
         block.replaceWith(newEl);
@@ -381,10 +374,19 @@ const Editor = (() => {
     const blocks = getSelectedBlocks(range, bodyEl);
     if (!blocks.length) return;
 
+    // If bullet button is clicked while cursor is in a checklist, toggle the checklist off
+    if (listTag === 'ul') {
+      const allChecklist = blocks.every(b =>
+        b.tagName.toLowerCase() === 'li' && !!b.querySelector('input[type="checkbox"]')
+      );
+      if (allChecklist) { insertChecklist(bodyEl, sel); return; }
+    }
+
     const allInTargetList = blocks.every(b => {
       if (b.tagName.toLowerCase() !== 'li') return false;
       const list = b.closest('ul, ol');
-      return list && list.tagName.toLowerCase() === listTag;
+      return list && list.tagName.toLowerCase() === listTag
+        && !b.querySelector('input[type="checkbox"]');
     });
 
     let lastEl;
@@ -393,15 +395,8 @@ const Editor = (() => {
       for (const block of blocks) {
         const p = document.createElement('p');
         p.innerHTML = block.innerHTML.trim() || '<br>';
-        const list = block.closest('ul, ol');
-        if (lastEl) {
-          lastEl.after(p);
-        } else {
-          list.before(p);
-        }
+        hoistFromList(block, p);
         lastEl = p;
-        block.remove();
-        if (list && list.children.length === 0) list.remove();
       }
     } else {
       const newList = document.createElement(listTag);
@@ -453,15 +448,8 @@ const Editor = (() => {
         const clone = block.cloneNode(true);
         clone.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.remove());
         p.textContent = clone.textContent.replace(/^\s*/, '');
-        const list = block.closest('ul, ol');
-        if (lastEl) {
-          lastEl.after(p);
-        } else {
-          list.before(p);
-        }
+        hoistFromList(block, p);
         lastEl = p;
-        block.remove();
-        if (list && list.children.length === 0) list.remove();
       }
       if (lastEl) {
         const newRange = document.createRange();
@@ -1039,16 +1027,24 @@ const Editor = (() => {
       strikethrough: ['s'],
       h1: ['h1'], h2: ['h2'], h3: ['h3'],
       blockquote: ['blockquote'],
-      ul: ['ul'], ol: ['ol'],
       code: ['code'],
       codeblock: ['pre'],
     };
 
     const inPre = !!closestTag(node, 'pre');
+    const closestLi = closestTag(node, 'li');
+    const inChecklist = !!(closestLi && closestLi.querySelector('input[type="checkbox"]'));
+    const inUl = !!closestTag(node, 'ul');
+    const inOl = !!closestTag(node, 'ol');
+
     toolbarEl.querySelectorAll('[data-cmd]').forEach(btn => {
-      const tags = cmdMap[btn.dataset.cmd];
+      const cmd = btn.dataset.cmd;
+      if (cmd === 'ul') { btn.classList.toggle('active', inUl && !inChecklist); return; }
+      if (cmd === 'ol') { btn.classList.toggle('active', inOl); return; }
+      if (cmd === 'checklist') { btn.classList.toggle('active', inChecklist); return; }
+      const tags = cmdMap[cmd];
       if (!tags) { btn.classList.remove('active'); return; }
-      if (btn.dataset.cmd === 'code' && inPre) { btn.classList.remove('active'); return; }
+      if (cmd === 'code' && inPre) { btn.classList.remove('active'); return; }
       const active = tags.some(tag => !!closestTag(node, tag));
       btn.classList.toggle('active', active);
     });
@@ -1058,6 +1054,24 @@ const Editor = (() => {
     if (!previewEl) return;
     const tags = extractTagsFromHTML(bodyEl.innerHTML);
     previewEl.innerHTML = renderTagChips(tags);
+  }
+
+  function hoistFromList(li, newEl) {
+    const list = li.closest('ul, ol');
+    const items = [...list.children];
+    const idx = items.indexOf(li);
+    if (idx === 0) {
+      list.before(newEl);
+    } else if (idx === items.length - 1) {
+      list.after(newEl);
+    } else {
+      const afterList = document.createElement(list.tagName.toLowerCase());
+      items.slice(idx + 1).forEach(item => afterList.appendChild(item));
+      list.after(afterList);
+      list.after(newEl);
+    }
+    li.remove();
+    if (list.children.length === 0) list.remove();
   }
 
   function closestTag(node, tag) {
