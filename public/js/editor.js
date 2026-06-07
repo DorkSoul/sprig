@@ -407,19 +407,16 @@ const Editor = (() => {
         lastEl = li;
       }
       const firstBlock = blocks[0];
-      if (firstBlock.tagName.toLowerCase() === 'li') {
-        firstBlock.closest('ul, ol').before(newList);
+      const hostList = firstBlock.closest('ul, ol');
+      if (hostList) {
+        hostList.before(newList);
       } else {
         firstBlock.before(newList);
       }
       for (const block of blocks) {
-        if (block.tagName.toLowerCase() === 'li') {
-          const list = block.closest('ul, ol');
-          block.remove();
-          if (list && list.children.length === 0) list.remove();
-        } else {
-          block.remove();
-        }
+        const list = block.closest('ul, ol');
+        block.remove();
+        if (list && list.children.length === 0) list.remove();
       }
     }
 
@@ -478,19 +475,16 @@ const Editor = (() => {
     }
 
     const firstBlock = blocks[0];
-    if (firstBlock.tagName.toLowerCase() === 'li') {
-      firstBlock.closest('ul, ol').before(newList);
+    const hostList = firstBlock.closest('ul, ol');
+    if (hostList) {
+      hostList.before(newList);
     } else {
       firstBlock.before(newList);
     }
     for (const block of blocks) {
-      if (block.tagName.toLowerCase() === 'li') {
-        const list = block.closest('ul, ol');
-        block.remove();
-        if (list && list.children.length === 0) list.remove();
-      } else {
-        block.remove();
-      }
+      const list = block.closest('ul, ol');
+      block.remove();
+      if (list && list.children.length === 0) list.remove();
     }
 
     if (lastText) {
