@@ -117,6 +117,18 @@ export function parseMarkdown(md) {
       continue;
     }
 
+    if (/^\|/.test(line) && i + 1 < lines.length && /^\|[\s\-:|]+\|/.test(lines[i + 1])) {
+      const parseRow = r => r.split('|').slice(1, -1).map(c => c.trim());
+      const headers = parseRow(line);
+      i += 2; // skip header + separator
+      const rows = [];
+      while (i < lines.length && /^\|/.test(lines[i])) { rows.push(parseRow(lines[i])); i++; }
+      const thead = `<thead><tr>${headers.map(h => `<th>${inline(h)}</th>`).join('')}</tr></thead>`;
+      const tbody = `<tbody>${rows.map(r => `<tr>${r.map(c => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody>`;
+      out.push(`<table>${thead}${tbody}</table>`);
+      continue;
+    }
+
     if (line.trim() === '') { i++; continue; }
 
     const paraLines = [];
