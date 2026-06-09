@@ -50,7 +50,8 @@ const Feed = (() => {
     container.querySelectorAll('.note-card').forEach(card => {
       const id = card.dataset.id;
       card.addEventListener('click', e => {
-        if (e.target.closest('button')) return;
+        if (e.target.closest('button, .preview-resize-handle')) return;
+        if (!e.target.closest('.note-card-preview, .note-card-title')) return;
         window._noteView?.open(id);
       });
     });

@@ -43,10 +43,12 @@
 .note-card-preview input[type="checkbox"] { pointer-events: none; }
 
 .preview-resize-handle {
-  height: 14px;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
   cursor: ns-resize;
-  position: relative;
-  margin-top: -14px;
   z-index: 2;
   pointer-events: auto;
   opacity: 0;
