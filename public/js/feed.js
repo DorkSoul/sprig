@@ -51,8 +51,14 @@ const Feed = (() => {
       const id = card.dataset.id;
       card.addEventListener('click', e => {
         if (e.target.closest('button, .preview-resize-handle')) return;
-        if (!e.target.closest('.note-card-preview, .note-card-title')) return;
-        window._noteView?.open(id);
+        const inRect = el => {
+          if (!el) return false;
+          const r = el.getBoundingClientRect();
+          return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+        };
+        if (inRect(card.querySelector('.note-card-preview')) || inRect(card.querySelector('.note-card-title'))) {
+          window._noteView?.open(id);
+        }
       });
     });
 
