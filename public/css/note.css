@@ -91,7 +91,9 @@
   padding: 2px 8px;
   color: var(--accent);
   white-space: nowrap;
+  cursor: pointer;
 }
+.tag-chip:hover { border-color: var(--accent); }
 
 .note-meta {
   font-size: 12px;

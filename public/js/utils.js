@@ -51,7 +51,7 @@ export function extractTagsFromHTML(html) {
 }
 
 export function renderTagChips(tags) {
-  return tags.map(t => `<span class="tag-chip">#${enc(t)}</span>`).join('');
+  return tags.map(t => `<span class="tag-chip" data-tag="${enc(t)}">#${enc(t)}</span>`).join('');
 }
 
 export function syncDueDateDisplay(inputId, btnId, clearId) {

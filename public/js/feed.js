@@ -47,10 +47,17 @@ const Feed = (() => {
 
     container.innerHTML = sorted.map(n => renderCard(n, opts)).join('');
 
+    container.querySelectorAll('.tag-chip').forEach(chip => {
+      chip.addEventListener('click', e => {
+        e.stopPropagation();
+        window._sidebar?.selectTag(chip.dataset.tag);
+      });
+    });
+
     container.querySelectorAll('.note-card').forEach(card => {
       const id = card.dataset.id;
       card.addEventListener('click', e => {
-        if (e.target.closest('button, .preview-resize-handle')) return;
+        if (e.target.closest('button, .preview-resize-handle, .tag-chip')) return;
         const inRect = el => {
           if (!el) return false;
           const r = el.getBoundingClientRect();

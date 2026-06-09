@@ -71,7 +71,14 @@ const Sidebar = (() => {
     document.getElementById('sidebar').classList.toggle('collapsed');
   });
 
-  return { renderTags, clearActiveTag, showView };
+  function selectTag(tag) {
+    _activeTag = tag;
+    renderTags();
+    window._feed?.filterByTag(tag);
+    showView('feed');
+  }
+
+  return { renderTags, clearActiveTag, showView, selectTag };
 })();
 
 export default Sidebar;
