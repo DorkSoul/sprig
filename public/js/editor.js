@@ -350,7 +350,7 @@ const Editor = (() => {
   function toggleBlock(tag, bodyEl, sel) {
     const range = sel.getRangeAt(0);
     const blocks = getSelectedBlocks(range, bodyEl);
-    if (!blocks.length) return;
+    if (!blocks.length) { insertEmptyBlock(tag, bodyEl, sel); return; }
 
     const allMatch = blocks.every(b => b.tagName.toLowerCase() === tag);
     const targetTag = allMatch ? 'p' : tag;
@@ -379,10 +379,34 @@ const Editor = (() => {
     }
   }
 
+  function insertEmptyBlock(tag, bodyEl, sel) {
+    const el = document.createElement(tag);
+    el.innerHTML = '<br>';
+    bodyEl.appendChild(el);
+    const r = document.createRange();
+    r.setStart(el, 0);
+    r.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(r);
+    return el;
+  }
+
   function toggleList(listTag, bodyEl, sel) {
     const range = sel.getRangeAt(0);
     const blocks = getSelectedBlocks(range, bodyEl);
-    if (!blocks.length) return;
+    if (!blocks.length) {
+      const newList = document.createElement(listTag);
+      const li = document.createElement('li');
+      li.innerHTML = '<br>';
+      newList.appendChild(li);
+      bodyEl.appendChild(newList);
+      const r = document.createRange();
+      r.setStart(li, 0);
+      r.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(r);
+      return;
+    }
 
     const allInTargetList = blocks.every(b => {
       if (b.tagName.toLowerCase() !== 'li') return false;
@@ -436,7 +460,23 @@ const Editor = (() => {
   function insertChecklist(bodyEl, sel) {
     const range = sel.getRangeAt(0);
     const blocks = getSelectedBlocks(range, bodyEl);
-    if (!blocks.length) return;
+    if (!blocks.length) {
+      const newList = document.createElement('ul');
+      const li = document.createElement('li');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      const text = document.createTextNode('​');
+      li.appendChild(cb);
+      li.appendChild(text);
+      newList.appendChild(li);
+      bodyEl.appendChild(newList);
+      const r = document.createRange();
+      r.setStart(text, text.length);
+      r.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(r);
+      return;
+    }
 
     const allCheckbox = blocks.every(b =>
       b.tagName.toLowerCase() === 'li' && b.querySelector('input[type="checkbox"]')
