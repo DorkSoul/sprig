@@ -17,13 +17,40 @@ export function enc(str) {
     .replace(/"/g, '&quot;');
 }
 
+// Lightweight transient notification. Creates a container on first use.
+export function toast(message, type = 'error') {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    document.body.appendChild(container);
+  }
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = message;
+  container.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 300);
+  }, 3500);
+}
+
 export async function apiFetch(url, opts = {}) {
-  const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
-    credentials: 'same-origin',
-    ...opts,
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
-  });
+  let res;
+  try {
+    res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+      credentials: 'same-origin',
+      ...opts,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+  } catch {
+    // Network failure (offline, server down). Surface it instead of throwing an
+    // unhandled rejection, and return null so callers treat it as a failed request.
+    toast('Network error — check your connection.');
+    return null;
+  }
   if (res.status === 401) {
     window._auth?.handle401();
     return null;
@@ -145,6 +172,14 @@ function esc(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+// Neutralize dangerous URL schemes (javascript:/vbscript:/data:) in imported
+// markdown links/images, which are inserted into the editor via innerHTML.
+function safeUrl(url) {
+  const normalized = url.replace(/[\x00-\x20]+/g, '').toLowerCase();
+  if (/^(javascript|vbscript|data):/.test(normalized)) return '';
+  return url.replace(/"/g, '&quot;');
+}
+
 function inline(text) {
   return text
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -154,6 +189,6 @@ function inline(text) {
     .replace(/_(.+?)_/g, '<em>$1</em>')
     .replace(/~~(.+?)~~/g, '<s>$1</s>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, src) => `<img src="${safeUrl(src)}" alt="${alt}">`)
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, txt, href) => `<a href="${safeUrl(href)}" target="_blank" rel="noopener">${txt}</a>`);
 }

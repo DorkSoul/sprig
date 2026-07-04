@@ -1,10 +1,15 @@
 const Graph = (() => {
+  const NODE_RADIUS = 8;
   let _animFrame = null;
   let _nodes = [];
   let _edges = [];
+  // Persist node positions across renders so returning to the graph view keeps a
+  // stable layout instead of re-randomizing every time.
+  const _positions = {};
 
   function render() {
     const canvas = document.getElementById('graph-canvas');
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const notes = window._notes || [];
 
@@ -23,14 +28,17 @@ const Graph = (() => {
       return;
     }
 
-    _nodes = notes.map((n, i) => ({
-      id: n.id,
-      label: n.title || '(untitled)',
-      x: w / 2 + (Math.random() - 0.5) * w * 0.6,
-      y: h / 2 + (Math.random() - 0.5) * h * 0.6,
-      vx: 0,
-      vy: 0,
-    }));
+    _nodes = notes.map(n => {
+      const saved = _positions[n.id];
+      return {
+        id: n.id,
+        label: n.title || '(untitled)',
+        x: saved ? saved.x : w / 2 + (Math.random() - 0.5) * w * 0.6,
+        y: saved ? saved.y : h / 2 + (Math.random() - 0.5) * h * 0.6,
+        vx: 0,
+        vy: 0,
+      };
+    });
 
     _edges = [];
     const nodeMap = Object.fromEntries(_nodes.map(n => [n.id, n]));
@@ -56,7 +64,7 @@ const Graph = (() => {
       const my = e.clientY - rect.top;
       for (const node of _nodes) {
         const dx = node.x - mx, dy = node.y - my;
-        if (Math.sqrt(dx * dx + dy * dy) < 12) {
+        if (Math.sqrt(dx * dx + dy * dy) < NODE_RADIUS + 6) {
           window._noteView?.open(node.id);
           return;
         }
@@ -104,6 +112,7 @@ const Graph = (() => {
       node.y += node.vy;
       node.x = Math.max(20, Math.min(canvas.width - 20, node.x));
       node.y = Math.max(20, Math.min(canvas.height - 20, node.y));
+      _positions[node.id] = { x: node.x, y: node.y };
     }
   }
 
@@ -125,7 +134,7 @@ const Graph = (() => {
 
     for (const node of _nodes) {
       ctx.beginPath();
-      ctx.arc(node.x, node.y, 8, 0, Math.PI * 2);
+      ctx.arc(node.x, node.y, NODE_RADIUS, 0, Math.PI * 2);
       ctx.fillStyle = '#1db954';
       ctx.fill();
       ctx.strokeStyle = '#111';

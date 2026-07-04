@@ -46,7 +46,7 @@ const Folders = (() => {
           window._feed?.clearTagFilter();
         } else {
           _activeFolder = id;
-          filterByFolder(id);
+          filterByFolder();
         }
         render();
         window._sidebar?.showView('feed');
@@ -70,11 +70,10 @@ const Folders = (() => {
     });
   }
 
-  function filterByFolder(folderId) {
-    const notes = window._notes || [];
-    const filtered = notes.filter(n => n.folderId === folderId);
-    const container = document.getElementById('note-feed');
-    window._feed?.render(container, filtered);
+  function filterByFolder() {
+    // _activeFolder is already set by the caller; render through Feed's combined
+    // tag+folder filter so the view matches what a later refresh will show.
+    window._feed?.renderActive();
   }
 
   async function createFolder(name) {

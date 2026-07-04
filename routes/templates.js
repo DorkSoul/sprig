@@ -4,9 +4,13 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getTemplates, setTemplates } = require('../lib/data');
 const { requireAuth } = require('../middleware/auth');
+const { sanitizeHTML } = require('../lib/sanitize');
 
 const router = express.Router();
 router.use(requireAuth);
+
+// Cap templates per user to bound disk usage.
+const MAX_TEMPLATES_PER_USER = 500;
 
 router.get('/', (req, res) => {
   const templates = getTemplates().filter(t => t.userId === req.session.userId);
@@ -18,15 +22,24 @@ router.post('/', (req, res) => {
   if (!name || typeof name !== 'string' || !name.trim()) {
     return res.status(400).json({ error: 'Name required' });
   }
+  const templates = getTemplates();
+  const mine = templates.filter(t => t.userId === req.session.userId);
+  if (mine.length >= MAX_TEMPLATES_PER_USER) {
+    return res.status(403).json({ error: 'Template limit reached' });
+  }
+  const trimmedName = name.trim().slice(0, 100);
+  if (mine.some(t => t.name.toLowerCase() === trimmedName.toLowerCase())) {
+    return res.status(400).json({ error: 'A template with that name already exists' });
+  }
   const template = {
     id: uuidv4(),
     userId: req.session.userId,
-    name: name.trim().slice(0, 100),
+    name: trimmedName,
     title: typeof title === 'string' ? title.trim().slice(0, 200) : '',
-    content: typeof content === 'string' ? content : '',
+    // Sanitize on store: template content is inserted into the editor via innerHTML.
+    content: sanitizeHTML(typeof content === 'string' ? content : ''),
     createdAt: new Date().toISOString(),
   };
-  const templates = getTemplates();
   templates.push(template);
   setTemplates(templates);
   res.json(template);

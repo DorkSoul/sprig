@@ -1,4 +1,4 @@
-import { extractTagsFromHTML, renderTagChips, apiFetch, parseMarkdown } from './utils.js';
+import { extractTagsFromHTML, renderTagChips, apiFetch, parseMarkdown, enc } from './utils.js';
 
 const Editor = (() => {
   let _notes = [];
@@ -790,7 +790,7 @@ const Editor = (() => {
       const query = text.slice(idx + 2);
       if (query.includes(']]')) { hideLinkAutocomplete(); return; }
 
-      _linkSearchStart = { node, offset: idx };
+      _linkSearchStart = { node, offset: idx, caret: sel.focusOffset };
       showLinkAutocomplete(query, range);
     }, 0);
   }
@@ -807,9 +807,10 @@ const Editor = (() => {
 
     if (filtered.length === 0) { hideLinkAutocomplete(); return; }
 
-    list.innerHTML = filtered.map(n =>
-      `<li><button data-id="${n.id}" data-title="${n.title || '(untitled)'}">${n.title || '(untitled)'}</button></li>`
-    ).join('');
+    list.innerHTML = filtered.map(n => {
+      const title = n.title || '(untitled)';
+      return `<li><button data-id="${enc(n.id)}" data-title="${enc(title)}">${enc(title)}</button></li>`;
+    }).join('');
 
     list.querySelectorAll('button').forEach(btn => {
       btn.addEventListener('click', () => insertNoteLink(btn.dataset.id, btn.dataset.title));
@@ -836,35 +837,36 @@ const Editor = (() => {
   }
 
   function insertNoteLink(id, title) {
+    // Capture the search anchor before hiding, since hideLinkAutocomplete() clears it.
+    const start = _linkSearchStart;
     hideLinkAutocomplete();
-    if (!_linkSearchStart) return;
+    if (!start) return;
 
-    const { node, offset } = _linkSearchStart;
+    // Replace only the "[[query" span between the '[[' start (offset) and the caret,
+    // preserving any text that followed the caret on the same node.
+    const { node, offset, caret } = start;
     const fullText = node.textContent;
     const before = fullText.slice(0, offset);
-    const after = fullText.slice(node.textContent.lastIndexOf('[[', offset + 2) + 2 + (fullText.slice(offset + 2).search(/\]\]|$/) === -1 ? fullText.length : 0));
+    const after = fullText.slice(caret ?? fullText.length);
 
     const anchor = document.createElement('a');
     anchor.href = `#${id}`;
     anchor.className = 'note-link';
     anchor.textContent = title;
 
+    node.textContent = before;
+    const parent = node.parentNode;
+    parent.insertBefore(anchor, node.nextSibling);
+
+    const tail = document.createTextNode(' ' + after);
+    parent.insertBefore(tail, anchor.nextSibling);
+
     const sel = window.getSelection();
     const range = document.createRange();
-    range.setStart(node, offset);
-    range.setEnd(node, node.textContent.length);
-    range.deleteContents();
-
-    node.textContent = before;
-    node.parentNode.insertBefore(anchor, node.nextSibling);
-
-    const space = document.createTextNode(' ');
-    anchor.parentNode.insertBefore(space, anchor.nextSibling);
-
-    range.setStart(space, 1);
+    range.setStart(tail, 1);
+    range.collapse(true);
     sel.removeAllRanges();
     sel.addRange(range);
-    _linkSearchStart = null;
   }
 
   function handleTabKey(e) {

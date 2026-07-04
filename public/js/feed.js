@@ -1,13 +1,10 @@
-import { formatDate, enc, apiFetch, extractTagsFromHTML, renderTagChips } from './utils.js';
+import { formatDate, enc, apiFetch, renderTagChips, toast } from './utils.js';
 
 const Feed = (() => {
   let _notes = [];
   let _activeTag = null;
   let _currentView = 'feed';
   let _sortKey = 'updated_desc';
-
-  function setNotes(notes) { _notes = notes; }
-  function getNotes() { return _notes; }
 
   async function load() {
     const res = await apiFetch('/api/notes');
@@ -29,10 +26,23 @@ const Feed = (() => {
 
   function sortNotes(notes) {
     const arr = [...notes];
-    if (_sortKey === 'updated_asc') return arr.sort((a, b) => a.updatedAt.localeCompare(b.updatedAt));
-    if (_sortKey === 'created_desc') return arr.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const upd = n => n.updatedAt || n.createdAt || '';
+    const cre = n => n.createdAt || n.updatedAt || '';
+    if (_sortKey === 'updated_asc') return arr.sort((a, b) => upd(a).localeCompare(upd(b)));
+    if (_sortKey === 'created_desc') return arr.sort((a, b) => cre(b).localeCompare(cre(a)));
     if (_sortKey === 'title_asc') return arr.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
-    return arr.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    return arr.sort((a, b) => upd(b).localeCompare(upd(a)));
+  }
+
+  // Apply the active tag and/or folder scope. Both filters compose (intersection) so
+  // that refreshing after a pin/delete preserves whichever scope the user set, instead
+  // of silently reverting to the full list.
+  function applyFilters(notes) {
+    let filtered = notes;
+    const activeFolder = window._folders?.getActiveFolder?.();
+    if (activeFolder) filtered = filtered.filter(n => n.folderId === activeFolder);
+    if (_activeTag) filtered = filtered.filter(n => n.tags?.includes(_activeTag));
+    return filtered;
   }
 
   function render(container, notes, opts = {}) {
@@ -76,7 +86,8 @@ const Feed = (() => {
         const note = _notes.find(n => n.id === id);
         if (!note) return;
         const res = await apiFetch(`/api/notes/${id}`, { method: 'PUT', body: { pinned: !note.pinned } });
-        if (!res?.ok) return;
+        if (!res) return;
+        if (!res.ok) { toast('Could not update pin.'); return; }
         note.pinned = !note.pinned;
         btn.classList.toggle('active', note.pinned);
         btn.title = note.pinned ? 'Unpin' : 'Pin';
@@ -98,15 +109,23 @@ const Feed = (() => {
         const id = btn.closest('.note-card').dataset.id;
         if (!confirm('Delete this note?')) return;
         const res = await apiFetch(`/api/notes/${id}`, { method: 'DELETE' });
-        if (res?.ok) await refresh();
+        if (!res) return;
+        if (!res.ok) { toast('Could not delete note.'); return; }
+        await refresh();
       });
     });
   }
 
+  // Local YYYY-MM-DD; dueDate is a timezone-agnostic calendar date the user picked,
+  // so "today" must be computed in local time (not UTC) to avoid off-by-one near midnight.
+  function localDateKey(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
+
   function getDueBadge(dueDate) {
     if (!dueDate) return '';
-    const today = new Date().toISOString().slice(0, 10);
-    const sevenDays = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+    const today = localDateKey(new Date());
+    const sevenDays = localDateKey(new Date(Date.now() + 7 * 86400000));
     let status;
     if (dueDate < today) status = 'overdue';
     else if (dueDate === today) status = 'today';
@@ -133,7 +152,7 @@ const Feed = (() => {
       </div>`;
 
     return `
-      <div class="note-card${pinClass}" data-id="${note.id}">
+      <div class="note-card${pinClass}" data-id="${enc(note.id)}">
         ${actionsHtml}
         ${titleHtml}
         <div class="note-card-preview note-body">${previewContent || '<em>Empty note</em>'}</div>
@@ -148,22 +167,24 @@ const Feed = (() => {
   async function refresh() {
     await load();
     const container = document.getElementById('note-feed');
-    let filtered = _notes;
-    if (_activeTag) filtered = _notes.filter(n => n.tags?.includes(_activeTag));
-    render(container, filtered);
+    render(container, applyFilters(_notes));
     window._sidebar?.renderTags();
+  }
+
+  // Render the current notes through the active tag+folder filters. Single entry point
+  // so every filter change (tag, folder, refresh, re-login) shows the same set.
+  function renderActive() {
+    render(document.getElementById('note-feed'), applyFilters(_notes));
   }
 
   function filterByTag(tag) {
     _activeTag = tag;
-    const container = document.getElementById('note-feed');
-    const filtered = tag ? _notes.filter(n => n.tags?.includes(tag)) : _notes;
-    render(container, filtered);
+    renderActive();
   }
 
   function clearTagFilter() {
     _activeTag = null;
-    render(document.getElementById('note-feed'), _notes);
+    renderActive();
   }
 
 async function renderPublic() {
@@ -171,14 +192,18 @@ async function renderPublic() {
     render(document.getElementById('public-feed'), notes, { readonly: true });
   }
 
+  let _searchSeq = 0;
   async function renderSearch(q) {
+    const seq = ++_searchSeq;
     const res = await apiFetch(`/api/notes/search?q=${encodeURIComponent(q)}`);
     if (!res) return;
     const notes = await res.json();
+    // Ignore a response that a newer search has already superseded.
+    if (seq !== _searchSeq) return;
     render(document.getElementById('search-feed'), notes, { readonly: false });
   }
 
-  return { load, render, refresh, renderCard, filterByTag, clearTagFilter, renderPublic, renderSearch, setNotes, getNotes, setSort };
+  return { load, render, renderActive, refresh, renderCard, filterByTag, clearTagFilter, renderPublic, renderSearch, setSort };
 })();
 
 export default Feed;

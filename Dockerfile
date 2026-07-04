@@ -1,7 +1,7 @@
 FROM --platform=$BUILDPLATFORM node:20-alpine AS deps
 WORKDIR /app
-COPY package.json ./
-RUN npm install --omit=dev
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
 
 FROM node:20-alpine
 WORKDIR /app
@@ -11,5 +11,8 @@ COPY lib/ lib/
 COPY middleware/ middleware/
 COPY routes/ routes/
 COPY public/ public/
+# Create the writable data dir owned by the unprivileged runtime user.
+RUN mkdir -p /app/data/sessions && chown -R node:node /app/data
+USER node
 EXPOSE 7341
-CMD ["sh", "-c", "mkdir -p /app/data/sessions && node server.js"]
+CMD ["node", "server.js"]

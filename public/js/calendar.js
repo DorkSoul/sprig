@@ -9,6 +9,12 @@ const Calendar = (() => {
     'July','August','September','October','November','December'];
   const DAY_NAMES = ['Su','Mo','Tu','We','Th','Fr','Sa'];
 
+  // Local YYYY-MM-DD for a Date. Using local (not UTC) parts keeps the grouping key,
+  // the "today" highlight, and the locally-labeled grid cells on the same calendar day.
+  function localDateKey(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
+
   function render() {
     const container = document.getElementById('calendar-view');
     if (!container) return;
@@ -17,15 +23,15 @@ const Calendar = (() => {
 
     const notesByDate = {};
     notes.forEach(n => {
-      const d = n.createdAt ? n.createdAt.slice(0, 10) : null;
-      if (!d) return;
+      if (!n.createdAt) return;
+      const d = localDateKey(new Date(n.createdAt));
       if (!notesByDate[d]) notesByDate[d] = [];
       notesByDate[d].push(n);
     });
 
     const firstDay = new Date(_year, _month, 1).getDay();
     const daysInMonth = new Date(_year, _month + 1, 0).getDate();
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = localDateKey(new Date());
 
     const dayHeaders = DAY_NAMES.map(d => `<div class="cal-day-header">${d}</div>`).join('');
 

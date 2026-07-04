@@ -8,6 +8,9 @@ const { requireAuth } = require('../middleware/auth');
 const router = express.Router();
 router.use(requireAuth);
 
+// Cap folders per user to bound disk usage.
+const MAX_FOLDERS_PER_USER = 500;
+
 router.get('/', (req, res) => {
   const folders = getFolders().filter(f => f.userId === req.session.userId);
   res.json(folders);
@@ -18,13 +21,21 @@ router.post('/', (req, res) => {
   if (!name || typeof name !== 'string' || !name.trim()) {
     return res.status(400).json({ error: 'Name required' });
   }
+  const folders = getFolders();
+  const mine = folders.filter(f => f.userId === req.session.userId);
+  if (mine.length >= MAX_FOLDERS_PER_USER) {
+    return res.status(403).json({ error: 'Folder limit reached' });
+  }
+  const trimmedName = name.trim().slice(0, 100);
+  if (mine.some(f => f.name.toLowerCase() === trimmedName.toLowerCase())) {
+    return res.status(400).json({ error: 'A folder with that name already exists' });
+  }
   const folder = {
     id: uuidv4(),
     userId: req.session.userId,
-    name: name.trim().slice(0, 100),
+    name: trimmedName,
     createdAt: new Date().toISOString(),
   };
-  const folders = getFolders();
   folders.push(folder);
   setFolders(folders);
   res.json(folder);
@@ -40,7 +51,12 @@ router.put('/:id', (req, res) => {
   if (!name || typeof name !== 'string' || !name.trim()) {
     return res.status(400).json({ error: 'Name required' });
   }
-  folders[idx].name = name.trim().slice(0, 100);
+  const trimmedName = name.trim().slice(0, 100);
+  if (folders.some(f => f.userId === req.session.userId && f.id !== req.params.id &&
+      f.name.toLowerCase() === trimmedName.toLowerCase())) {
+    return res.status(400).json({ error: 'A folder with that name already exists' });
+  }
+  folders[idx].name = trimmedName;
   setFolders(folders);
   res.json(folders[idx]);
 });

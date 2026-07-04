@@ -3,7 +3,12 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
-const { getUsers, setUsers, getNotes, setNotes } = require('../lib/data');
+const {
+  getUsers, setUsers, getNotes, setNotes,
+  getFolders, setFolders, getSearches, setSearches,
+  getVersions, setVersions, getTemplates, setTemplates,
+  deleteUserAttachments,
+} = require('../lib/data');
 const { requireAdmin, validUsername, validPassword } = require('../middleware/auth');
 
 const router = express.Router();
@@ -21,7 +26,7 @@ router.post('/users', (req, res) => {
   if (!validPassword(password)) return res.status(400).json({ error: 'Password must be 8–128 characters' });
 
   const users = getUsers();
-  if (users.find(u => u.username === username)) {
+  if (users.find(u => u.username.toLowerCase() === username.toLowerCase())) {
     return res.status(400).json({ error: 'Username taken' });
   }
 
@@ -47,7 +52,7 @@ router.put('/users/:id', (req, res) => {
   const { password, isAdmin, username } = req.body;
   if (username !== undefined) {
     if (!validUsername(username)) return res.status(400).json({ error: 'Invalid username' });
-    if (users.find(u => u.username === username && u.id !== req.params.id)) {
+    if (users.find(u => u.username.toLowerCase() === username.toLowerCase() && u.id !== req.params.id)) {
       return res.status(400).json({ error: 'Username taken' });
     }
     users[idx].username = username;
@@ -82,11 +87,17 @@ router.delete('/users/:id', (req, res) => {
     return res.status(400).json({ error: 'Cannot delete the last admin' });
   }
 
+  const userId = req.params.id;
   users.splice(idx, 1);
   setUsers(users);
 
-  const notes = getNotes().filter(n => n.userId !== req.params.id);
-  setNotes(notes);
+  // Cascade: remove all data owned by the deleted user so nothing is orphaned.
+  setNotes(getNotes().filter(n => n.userId !== userId));
+  setFolders(getFolders().filter(f => f.userId !== userId));
+  setSearches(getSearches().filter(s => s.userId !== userId));
+  setTemplates(getTemplates().filter(t => t.userId !== userId));
+  setVersions(getVersions().filter(v => v.userId !== userId));
+  deleteUserAttachments(userId);
 
   res.json({ ok: true });
 });

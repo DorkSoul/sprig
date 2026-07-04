@@ -5,8 +5,14 @@ const Auth = (() => {
 
   async function init(onReady) {
     _onReady = onReady;
-    const res = await fetch('/api/auth/status', { credentials: 'same-origin' });
-    const data = await res.json();
+    let data;
+    try {
+      const res = await fetch('/api/auth/status', { credentials: 'same-origin' });
+      data = await res.json();
+    } catch {
+      showStartupError();
+      return;
+    }
 
     if (data.state === 'setup') {
       showSetup();
@@ -15,6 +21,22 @@ const Auth = (() => {
     } else {
       hideOverlay(data);
     }
+  }
+
+  function showStartupError() {
+    const overlay = document.getElementById('auth-overlay');
+    overlay.classList.remove('hidden');
+    document.getElementById('setup-form')?.classList.add('hidden');
+    document.getElementById('login-form')?.classList.add('hidden');
+    let err = document.getElementById('startup-error');
+    if (!err) {
+      err = document.createElement('div');
+      err.id = 'startup-error';
+      err.className = 'auth-error';
+      overlay.querySelector('.auth-card')?.appendChild(err);
+    }
+    err.textContent = 'Could not reach the server. Check your connection and reload.';
+    err.classList.remove('hidden');
   }
 
   function showSetup() {

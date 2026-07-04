@@ -1,4 +1,4 @@
-import { apiFetch } from './utils.js';
+import { apiFetch, enc } from './utils.js';
 
 const Sidebar = (() => {
   let _activeTag = null;
@@ -13,9 +13,9 @@ const Sidebar = (() => {
 
     list.innerHTML = tags.map(t => `
       <li>
-        <button class="tag-btn${_activeTag === t.name ? ' active' : ''}" data-tag="${t.name}">
-          <span>#${t.name}</span>
-          <span class="tag-count">${t.count}</span>
+        <button class="tag-btn${_activeTag === t.name ? ' active' : ''}" data-tag="${enc(t.name)}">
+          <span>#${enc(t.name)}</span>
+          <span class="tag-count">${enc(t.count)}</span>
         </button>
       </li>`).join('');
 
@@ -33,10 +33,6 @@ const Sidebar = (() => {
         showView('feed');
       });
     });
-  }
-
-  function clearActiveTag() {
-    _activeTag = null;
   }
 
   function showView(view) {
@@ -78,7 +74,7 @@ const Sidebar = (() => {
     showView('feed');
   }
 
-  return { renderTags, clearActiveTag, showView, selectTag };
+  return { renderTags, showView, selectTag };
 })();
 
 export default Sidebar;

@@ -10,7 +10,7 @@ import Folders from './folders.js';
 import Searches from './searches.js';
 import Calendar from './calendar.js';
 import Templates from './templates.js';
-import { apiFetch, extractTagsFromHTML, syncDueDateDisplay } from './utils.js';
+import { apiFetch, extractTagsFromHTML, syncDueDateDisplay, toast } from './utils.js';
 
 window._auth = Auth;
 window._editor = Editor;
@@ -19,30 +19,39 @@ window._noteView = NoteView;
 window._sidebar = Sidebar;
 window._graph = Graph;
 window._admin = Admin;
+window._folders = Folders;
 
 Calendar.init();
+
+// Guards one-time listener binding. Auth.init's callback also runs after a
+// re-login following a 401, so anything that binds listeners to persistent DOM
+// nodes must run only once — otherwise saves/searches fire multiple times.
+let _appInitialized = false;
 
 Auth.init(async userData => {
   UserMenu.init(userData);
 
   await Feed.load();
-  Feed.render(document.getElementById('note-feed'), window._notes);
+  Feed.renderActive();
   Sidebar.renderTags();
 
   await Folders.loadAndRender();
   await Searches.loadAndRender();
   await Templates.loadAndRender();
 
-  initInlineEditor();
-  initSearch();
-  initLayoutToggle();
-  initSort();
-  initSaveSearch();
-  initTemplatesModal();
-  initPreviewResize();
+  if (!_appInitialized) {
+    _appInitialized = true;
+    initInlineEditor();
+    initSearch();
+    initLayoutToggle();
+    initSort();
+    initSaveSearch();
+    initTemplatesModal();
+    initPreviewResize();
 
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
   }
 });
 
@@ -72,21 +81,26 @@ function initInlineEditor() {
   saveBtn.addEventListener('click', async () => {
     const content = Editor.getContent(bodyEl);
     if (!content.trim() && !titleEl.value.trim()) return;
+    if (saveBtn.disabled) return; // guard against double-submit
 
     const tags = extractTagsFromHTML(content);
-    const res = await apiFetch('/api/notes', {
-      method: 'POST',
-      body: {
-        title: titleEl.value.trim(),
-        content,
-        tags,
-        visibility: publicEl.checked ? 'public' : 'private',
-        folderId: folderEl?.value || null,
-        dueDate: dueDateEl?.value || null,
-      },
-    });
+    saveBtn.disabled = true;
+    try {
+      const res = await apiFetch('/api/notes', {
+        method: 'POST',
+        body: {
+          title: titleEl.value.trim(),
+          content,
+          tags,
+          visibility: publicEl.checked ? 'public' : 'private',
+          folderId: folderEl?.value || null,
+          dueDate: dueDateEl?.value || null,
+        },
+      });
 
-    if (res?.ok) {
+      if (!res) return; // network error / 401 already surfaced
+      if (!res.ok) { toast('Could not save note. Your draft is kept.'); return; }
+
       Editor.clearContent(bodyEl);
       Editor.clearDraft('sprig-draft');
       tagsPreview.innerHTML = '';
@@ -95,6 +109,8 @@ function initInlineEditor() {
       if (folderEl) folderEl.value = '';
       if (dueDateEl) { dueDateEl.value = ''; syncDueDateDisplay('editor-due-date', 'editor-due-btn', 'editor-due-clear'); }
       await Feed.refresh();
+    } finally {
+      saveBtn.disabled = false;
     }
   });
 
@@ -211,6 +227,7 @@ function initSearch() {
 
   input.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
+      clearTimeout(debounce);
       input.value = '';
       Sidebar.showView('feed');
     }

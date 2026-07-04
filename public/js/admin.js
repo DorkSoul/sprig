@@ -22,8 +22,8 @@ const Admin = (() => {
         <td>${formatDate(u.createdAt)}</td>
         <td>
           <div class="admin-table-actions">
-            <button class="reset-pw-btn" data-id="${u.id}" data-name="${enc(u.username)}">Reset PW</button>
-            <button class="delete-user-btn danger-btn" data-id="${u.id}">Delete</button>
+            <button class="reset-pw-btn" data-id="${enc(u.id)}" data-name="${enc(u.username)}">Reset PW</button>
+            <button class="delete-user-btn danger-btn" data-id="${enc(u.id)}">Delete</button>
           </div>
         </td>
       </tr>`).join('');

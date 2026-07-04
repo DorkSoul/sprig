@@ -1,9 +1,16 @@
-import { formatDate, enc, apiFetch, extractTagsFromHTML, renderTagChips, syncDueDateDisplay } from './utils.js';
+import { formatDate, enc, apiFetch, extractTagsFromHTML, renderTagChips, syncDueDateDisplay, toast } from './utils.js';
 
 const NoteView = (() => {
-  function open(id) {
-    const note = (window._notes || []).find(n => n.id === id);
-    if (!note) return;
+  async function open(id) {
+    let note = (window._notes || []).find(n => n.id === id);
+    if (!note) {
+      // Not one of the user's own loaded notes (e.g. a link/backlink to a public
+      // note owned by someone else). Fetch it on demand; GET /:id allows public notes.
+      const res = await apiFetch(`/api/notes/${id}`);
+      if (!res) return;
+      if (!res.ok) { toast('That note is unavailable.'); return; }
+      note = await res.json();
+    }
 
     document.getElementById('modal-title').textContent = note.title || '';
     document.getElementById('modal-content').innerHTML = note.content;
@@ -31,7 +38,10 @@ const NoteView = (() => {
     document.getElementById('modal-delete-btn').onclick = async () => {
       if (!confirm('Delete this note?')) return;
       const res = await apiFetch(`/api/notes/${id}`, { method: 'DELETE' });
-      if (res?.ok) { closeModal(); await window._feed?.refresh(); }
+      if (!res) return;
+      if (!res.ok) { toast('Could not delete note.'); return; }
+      closeModal();
+      await window._feed?.refresh();
     };
 
     addCollapsibleHeadings(document.getElementById('modal-content'));
@@ -69,20 +79,33 @@ const NoteView = (() => {
     });
   }
 
+  // Returns the note HTML with the transient collapsible-heading UI removed: the
+  // injected toggle buttons and any inline display styles used to collapse sections.
+  // Persisting the rendered innerHTML directly would bake this UI into the note.
+  function cleanContentHTML(container) {
+    const clone = container.cloneNode(true);
+    clone.querySelectorAll('.heading-toggle').forEach(btn => btn.remove());
+    clone.querySelectorAll('[style]').forEach(el => {
+      el.style.removeProperty('display');
+      if (!el.getAttribute('style')) el.removeAttribute('style');
+    });
+    return clone.innerHTML;
+  }
+
   function wireCheckboxes(id) {
     const content = document.getElementById('modal-content');
     content.querySelectorAll('input[type="checkbox"]').forEach(cb => {
       cb.addEventListener('change', async () => {
         if (cb.checked) cb.setAttribute('checked', '');
         else cb.removeAttribute('checked');
-        const html = content.innerHTML;
+        const html = cleanContentHTML(content);
         const res = await apiFetch(`/api/notes/${id}`, { method: 'PUT', body: { content: html } });
-        if (res?.ok) {
-          const updated = await res.json();
-          const idx = (window._notes || []).findIndex(n => n.id === id);
-          if (idx !== -1) window._notes[idx] = updated;
-          window._feed?.refresh();
-        }
+        if (!res) return;
+        if (!res.ok) { toast('Could not save change.'); return; }
+        const updated = await res.json();
+        const idx = (window._notes || []).findIndex(n => n.id === id);
+        if (idx !== -1) window._notes[idx] = updated;
+        window._feed?.refresh();
       });
     });
   }
@@ -178,14 +201,14 @@ const NoteView = (() => {
       content.querySelector('#hist-back-btn').addEventListener('click', showVersionList);
       content.querySelector('#hist-restore-btn').addEventListener('click', async () => {
         const res = await apiFetch(`/api/notes/${id}/versions/${v.id}/restore`, { method: 'POST' });
-        if (res?.ok) {
-          const updated = await res.json();
-          const idx2 = (window._notes || []).findIndex(n => n.id === id);
-          if (idx2 !== -1) window._notes[idx2] = updated;
-          closeModal();
-          await window._feed?.refresh();
-          open(id);
-        }
+        if (!res) return;
+        if (!res.ok) { toast('Could not restore version.'); return; }
+        const updated = await res.json();
+        const idx2 = (window._notes || []).findIndex(n => n.id === id);
+        if (idx2 !== -1) window._notes[idx2] = updated;
+        closeModal();
+        await window._feed?.refresh();
+        open(id);
       });
     }
 
@@ -262,13 +285,13 @@ const NoteView = (() => {
         dueDate: dueDateEl?.value || null,
       };
       const res = await apiFetch(`/api/notes/${id}`, { method: 'PUT', body });
-      if (res?.ok) {
-        const updated = await res.json();
-        const idx = (window._notes || []).findIndex(n => n.id === id);
-        if (idx !== -1) window._notes[idx] = updated;
-        closeEditModal();
-        await window._feed?.refresh();
-      }
+      if (!res) return;
+      if (!res.ok) { toast('Could not save note.'); return; }
+      const updated = await res.json();
+      const idx = (window._notes || []).findIndex(n => n.id === id);
+      if (idx !== -1) window._notes[idx] = updated;
+      closeEditModal();
+      await window._feed?.refresh();
     };
 
     document.getElementById('edit-modal').classList.remove('hidden');
