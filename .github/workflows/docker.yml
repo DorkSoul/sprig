@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - testing
+      - security-hardening-and-fixes
 
 jobs:
   build:
@@ -37,6 +38,8 @@ jobs:
           SHORT=${SHA::7}
           if [ "${{ github.ref_name }}" = "main" ]; then
             echo "tags=ghcr.io/dorksoul/sprig:latest,ghcr.io/dorksoul/sprig:${SHORT}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref_name }}" = "security-hardening-and-fixes" ]; then
+            echo "tags=ghcr.io/dorksoul/sprig:fixes,ghcr.io/dorksoul/sprig:${SHORT}" >> $GITHUB_OUTPUT
           else
             echo "tags=ghcr.io/dorksoul/sprig:testing,ghcr.io/dorksoul/sprig:${SHORT}" >> $GITHUB_OUTPUT
           fi
